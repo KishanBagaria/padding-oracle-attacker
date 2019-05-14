@@ -1,3 +1,5 @@
+before_script:
+  - yarn build
 language: node_js
 node_js:
   - 12
