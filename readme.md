@@ -2,7 +2,7 @@
 
 CLI tool and library to execute [padding oracle attacks](https://en.wikipedia.org/wiki/Padding_oracle_attack) easily, with support for concurrent network requests and an elegant UI.
 
-![poattack decrypt demo](media/poattack-decrypt.gif)
+<img alt="poattack decrypt demo" src="media/poattack-decrypt.gif" width="734" height="492" />
 
 [![Build Status](https://travis-ci.org/KishanBagaria/padding-oracle-attacker.svg)](https://travis-ci.org/KishanBagaria/padding-oracle-attacker)
 
