@@ -176,6 +176,12 @@ Lints and runs the tests using ava.
 ##### `node test/helpers/vulnerable-server.js`
 Runs the test server which is vulnerable to padding oracle attacks at <http://localhost:2020>
 
+## Related
+
+* [PadBuster](https://github.com/GDSSecurity/PadBuster) (Perl)
+* [Padding Oracle Attack](https://github.com/mpgn/Padding-oracle-attack) (Python)
+* [Poracle](https://github.com/iagox86/poracle) (Ruby)
+
 ## License
 
 MIT © [Kishan Bagaria](https://kishanbagaria.com)
