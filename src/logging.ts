@@ -86,13 +86,13 @@ export function logProgress(
     .split('\n')
     .map(mapFunc)
     .join('\n')
-  const { barComplete, barIncomplete } = getBar(percent, blockSize * 4 + 4)
+  const { barComplete, barIncomplete } = getBar(percent, blockSize * 4 + 5)
   const log = isTTY ? logUpdate : console.log
   log(
     cipherplain,
-    '\n' + barComplete + barIncomplete, (percent * 100).toFixed(1).padStart(5) + '%', (blockI + 1) + 'x' + (byteI + 1), byte + '/256',
-    `\n${networkStats.count.toString().padStart(4)} total network requests | last request took ${networkStats.lastDownloadTime.toString().padStart(4)}ms`,
-    `| ${prettyBytes(networkStats.bytesDown).padStart(7)} downloaded | ${prettyBytes(networkStats.bytesUp).padStart(7)} uploaded`
+    '\n' + barComplete + barIncomplete, (percent * 100).toFixed(1).padStart(5) + '%', `${blockI + 1}x${byteI + 1}`.padStart(5), `${byte}/256`.padStart(7),
+    chalk`\n\n{yellow ${networkStats.count.toString().padStart(4)}} total network requests | last request took {yellow ${networkStats.lastDownloadTime.toString().padStart(4)}ms}`,
+    chalk`| {yellow ${prettyBytes(networkStats.bytesDown).padStart(7)}} downloaded | {yellow ${prettyBytes(networkStats.bytesUp).padStart(7)}} uploaded`
   )
 }
 export function logWarning(txt: string) {
@@ -113,13 +113,15 @@ function logRequest(request: OracleResult, logBody: boolean) {
   }
 }
 
+const logHeader = (h: string) => console.log(chalk.blue(`---${h}---`))
+
 interface LogStart { blockCount: number, totalSize: number, initialRequest?: Promise<OracleResult>, decryptionSuccess?: Promise<boolean> }
 export const decryption = {
   async logStart({ blockCount, totalSize, initialRequest: _initialRequest, decryptionSuccess }: LogStart) {
-    console.log(chalk.bold('~~~DECRYPTING~~~'))
+    console.log(chalk.bold.white('~~~DECRYPTING~~~'))
     console.log('total bytes:', chalk.yellow(String(totalSize)), '|', 'blocks:', chalk.yellow(String(blockCount - 1)))
     console.log()
-    console.log('---making request with original ciphertext---')
+    logHeader('making request with original ciphertext')
     const initialRequest = await _initialRequest
     if (initialRequest) {
       if (!await decryptionSuccess) {
@@ -133,34 +135,34 @@ export const decryption = {
   logCompletion({ foundBytes, interBytes }: { foundBytes: Buffer, interBytes: Buffer }) {
     logUpdate.done()
     console.log()
-    console.log('---plaintext printable bytes in utf8---')
+    logHeader('plaintext printable bytes in utf8')
     console.log(getPrintable(foundBytes.toString('utf8')))
     console.log()
-    console.log('---plaintext bytes in hex---')
+    logHeader('plaintext bytes in hex')
     console.log(foundBytes.toString('hex'))
     console.log()
-    console.log('---intermediate bytes in hex---')
+    logHeader('intermediate bytes in hex')
     console.log(interBytes.toString('hex'))
     console.log()
   }
 }
 export const encryption = {
   logStart({ blockCount, totalSize }: LogStart) {
-    console.log(chalk.bold('~~~ENCRYPTING~~~'))
+    console.log(chalk.bold.white('~~~ENCRYPTING~~~'))
     console.log('total bytes:', chalk.yellow(String(totalSize)), '|', 'blocks:', chalk.yellow(String(blockCount - 1)))
     console.log()
   },
   logCompletion({ foundBytes, interBytes, finalRequest }: { foundBytes: Buffer, interBytes: Buffer, finalRequest?: OracleResult }) {
     logUpdate.done()
     console.log()
-    console.log('---ciphertext bytes in hex---')
+    logHeader('ciphertext bytes in hex')
     console.log(foundBytes.toString('hex'))
     console.log()
-    console.log('---intermediate bytes in hex---')
+    logHeader('intermediate bytes in hex')
     console.log(interBytes.toString('hex'))
     console.log()
     if (!finalRequest) return
-    console.log('---final http request---')
+    logHeader('final http request')
     logRequest(finalRequest, true)
     console.log()
   }
