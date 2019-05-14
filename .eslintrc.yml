@@ -1,0 +1,26 @@
+parser: '@typescript-eslint/parser'
+plugins: ['@typescript-eslint']
+extends: [airbnb-base, plugin:@typescript-eslint/recommended]
+rules:
+  semi: [error, never]
+  comma-dangle: [error, never]
+  max-len: [warn, 180]
+  prefer-template: off
+  no-await-in-loop: off
+  no-bitwise: off
+  no-console: off
+  no-continue: off
+  no-control-regex: off
+  no-plusplus: off
+  no-restricted-globals: off
+  no-restricted-syntax: off
+  no-underscore-dangle: off
+  object-curly-newline: off
+  import/no-unresolved: off
+
+  '@typescript-eslint/member-delimiter-style':
+    - error
+    - multiline: { delimiter: none }
+      singleline: { delimiter: comma }
+  '@typescript-eslint/indent': off
+  '@typescript-eslint/explicit-function-return-type': off

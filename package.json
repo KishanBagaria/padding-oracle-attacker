@@ -1,0 +1,77 @@
+{
+  "name": "padding-oracle-attacker",
+  "version": "0.1.0",
+  "description": "CLI tool and library to execute padding oracle attacks easily",
+  "license": "MIT",
+  "repository": "KishanBagaria/padding-oracle-attacker",
+  "author": {
+    "name": "Kishan Bagaria",
+    "email": "hi@kishan.info",
+    "url": "https://kishanbagaria.com"
+  },
+  "engines": {
+    "node": ">=8"
+  },
+  "bin": {
+    "padding-oracle-attacker": "./dist/bin.js",
+    "padding-oracle-attack": "./dist/bin.js",
+    "poattack": "./dist/bin.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "trash dist || rm -rf dist",
+    "lint": "eslint --ext ts,js src/ test/",
+    "test": "(yarn lint || npm run lint); ava",
+    "prepublishOnly": "yarn build || npm run build"
+  },
+  "keywords": [
+    "aes",
+    "cbc",
+    "cipher-block-chaining",
+    "cipher",
+    "encryption",
+    "decryption",
+    "cryptography",
+    "crypto",
+    "pkcs",
+    "pkcs5",
+    "pkcs7"
+  ],
+  "dependencies": {
+    "@types/ansi-styles": "^3.2.1",
+    "@types/bluebird": "^3.5.26",
+    "@types/bluebird-global": "^3.5.11",
+    "@types/got": "^9.4.4",
+    "@types/keyv": "^3.1.0",
+    "@types/lodash": "^4.14.125",
+    "@types/minimist": "^1.2.0",
+    "@types/node": "^12.0.0",
+    "@types/wrap-ansi": "^3.0.0",
+    "ansi-styles": "^3.2.1",
+    "bluebird": "^3.5.4",
+    "chalk": "^2.4.2",
+    "got": "^9.6.0",
+    "keyv": "^3.1.0",
+    "keyv-file": "^0.1.13",
+    "lodash": "^4.17.11",
+    "log-update": "^3.2.0",
+    "minimist": "^1.2.0",
+    "ow": "^0.12.0",
+    "p-limit": "^2.2.0",
+    "pretty-bytes": "^5.2.0",
+    "wrap-ansi": "^5.1.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^1.7.0",
+    "@typescript-eslint/parser": "^1.7.0",
+    "ava": "*",
+    "body-parser": "^1.19.0",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.17.2",
+    "express": "^4.16.4",
+    "get-port": "^5.0.0",
+    "ts-node": "^8.1.0",
+    "typescript": "^3"
+  }
+}
