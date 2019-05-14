@@ -4,6 +4,8 @@ CLI tool and library to execute [padding oracle attacks](https://en.wikipedia.or
 
 ![poattack decrypt demo](media/poattack-decrypt.gif)
 
+[![Build Status](https://travis-ci.org/KishanBagaria/padding-oracle-attacker.svg)](https://travis-ci.org/KishanBagaria/padding-oracle-attacker)
+
 ## Install
 
 ```sh
