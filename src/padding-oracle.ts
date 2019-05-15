@@ -147,10 +147,10 @@ const PaddingOracle = (options: POOptions) => {
           if (success) break
         }
       }
-      if (!foundOffsets.has(offset)) throw Error('padding oracle failure for offset: 0x' + offset.toString(16))
+      if (!foundOffsets.has(offset)) throw Error(`Padding oracle failure for offset: 0x${offset.toString(16)}. Try again or check the parameter you provided for determining decryption success.`)
     }
     if (badErrorArgConfidence > (blockSize / 2)) {
-      logWarning('The error string (or isDecryptionSuccess() parameter) you provided for determining decryption success seems to be incorrect.')
+      logWarning('The parameter you provided for determining decryption success seems to be incorrect.')
       badErrorArgConfidence = 0
     }
   }

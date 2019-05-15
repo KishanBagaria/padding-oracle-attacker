@@ -102,7 +102,7 @@ export function logWarning(txt: string) {
 `)
 }
 
-const stringifyHeaders = (headers: HeadersObject) => Object.entries(headers).map(([k, v]) => `${chalk.gray(k)}: ${v}`).join('\n')
+const stringifyHeaders = (headers: HeadersObject) => Object.entries(headers).map(([k, v]) => `${chalk.gray(k.padEnd(20))}: ${v}`).join('\n')
 
 function logRequest(request: OracleResult, logBody: boolean) {
   console.log(request.statusCode, request.url)
@@ -126,7 +126,7 @@ export const decryption = {
     if (initialRequest) {
       if (!await decryptionSuccess) {
         logWarning(`Decryption failed for initial request with original ciphertext.
-        The error string (or isDecryptionSuccess() parameter) you provided for determining decryption success seems to be incorrect.`)
+The parameter you provided for determining decryption success seems to be incorrect.`)
       }
       logRequest(initialRequest, initialRequest.body.length < 1024)
     }

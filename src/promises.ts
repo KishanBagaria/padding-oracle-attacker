@@ -19,7 +19,6 @@ const rejectOnFalsey = (limit: Limit) => async (promise: promiseLike) => {
 // run n (`concurrency`) promises concurrently
 // when any promise is fulfilled with a truthy value, stop
 async function waitUntilFirstTruthyPromise(promises: promiseLike[], { concurrency = 16 } = {}) {
-  // debugger
   const limit = pLimit(concurrency)
   await bluebird.any(promises.map(rejectOnFalsey(limit))).catch(bluebird.AggregateError, (err) => {
     if (!(err[0] instanceof IgnoreError)) throw err[0]
