@@ -150,7 +150,7 @@ const PaddingOracle = (options: POOptions) => {
           if (success) break
         }
       }
-      if (!foundOffsets.has(offset)) {
+      if (isDecrypting && !foundOffsets.has(offset)) {
         await processByte({ blockI, byteI, byte: cipherByte, currentPadding, offset })
       }
       if (!foundOffsets.has(offset)) throw Error(`Padding oracle failure for offset: 0x${offset.toString(16)}. Try again or check the parameter you provided for determining decryption success.`)
