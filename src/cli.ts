@@ -36,7 +36,7 @@ const USAGE = chalk`
                             or status code of the HTTP response (like 400)
 
   {inverse Options}
-    -c, --concurrency       Requests to be sent concurrently                      [default: 64]
+    -c, --concurrency       Requests to be sent concurrently                      [default: 128]
         --disable-cache     Disable network cache. Saved to                       [default: false]
                             poattack-cache.json.gz.txt by default
     -X, --method            HTTP method to use while making request               [default: GET]
@@ -47,7 +47,7 @@ const USAGE = chalk`
                               URL encoded: id=101&foo=bar
                             Make sure to specify the Content-Type header.
 
-    -e, --payload-encoding  Ciphertext payload encoding.                          [default: hex]
+    -e, --payload-encoding  Ciphertext payload encoding for {underline \{POPAYLOAD\}}           [default: hex]
                               base64          FooBar+/=
                               base64-urlsafe  FooBar-_
                               hex             deadbeef
