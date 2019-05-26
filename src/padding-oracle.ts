@@ -57,6 +57,7 @@ const PaddingOracle = (options: POOptions) => {
     && !String(typeof headers === 'object' ? JSON.stringify(headers) : headers).includes(POPAYLOAD)
     && !(data || '').includes(POPAYLOAD)
   const networkStats = { count: 0, lastDownloadTime: 0, bytesDown: 0, bytesUp: 0 }
+  let stopLoggingProgress = false
 
   async function callOracle(payload: Buffer): Promise<{ url: string, statusCode: number, headers: HeadersObject, body: string }> {
     const payloadString = transformPayload ? transformPayload(payload) : payload.toString('hex')
@@ -123,7 +124,7 @@ const PaddingOracle = (options: POOptions) => {
 
     if (decryptionSuccess) byteFound({ offset, byte, currentPadding })
 
-    if (logMode === 'full') {
+    if (logMode === 'full' && !stopLoggingProgress) {
       if (!(foundOffsets.has(offset) && !decryptionSuccess)) { // make sure concurrency doesn't cause former bytes progress to be logged after later byte
         logProgress({ ciphertext, plaintext, foundOffsets, blockSize, blockI, byteI, byte, decryptionSuccess, networkStats, startFromFirstBlock })
       }
@@ -133,6 +134,7 @@ const PaddingOracle = (options: POOptions) => {
   }
   const isDecrypting = origBytes === ciphertext
   async function processBlock(blockI: number) {
+    let warningPrinted = false
     for (const byteI of range(blockSize - 1, -1)) {
       const currentPadding = blockSize - byteI
       const offset = (blockSize * blockI) + byteI
@@ -154,10 +156,10 @@ const PaddingOracle = (options: POOptions) => {
         await processByte({ blockI, byteI, byte: cipherByte, currentPadding, offset })
       }
       if (!foundOffsets.has(offset)) throw Error(`Padding oracle failure for offset: 0x${offset.toString(16)}. Try again or check the parameter you provided for determining decryption success.`)
-    }
-    if (badErrorArgConfidence > (blockSize / 2)) {
-      logWarning('The parameter you provided for determining decryption success seems to be incorrect.')
-      badErrorArgConfidence = 0
+      if (!warningPrinted && badErrorArgConfidence > (blockSize / 2)) {
+        logWarning('The parameter you provided for determining decryption success seems to be incorrect.')
+        warningPrinted = true
+      }
     }
   }
   async function processBlocks() {
@@ -165,6 +167,7 @@ const PaddingOracle = (options: POOptions) => {
     for (const blockI of blockIndexes) {
       await processBlock(blockI)
     }
+    stopLoggingProgress = true
   }
   return { processBlocks, callOracle }
 }
