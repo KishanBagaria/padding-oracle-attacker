@@ -74,8 +74,9 @@ const { version, method, H: headers, data, concurrency, e: payloadEncoding = 'he
 const VALID_ENCODINGS = ['hex-uppercase', 'base64', 'base64-urlsafe', 'hex']
 async function main() {
   const [operation, url, _cipherOrPlaintext] = argv._
-  const [,,, blockSize = 16] = argv._ as unknown[] as number[]
+  const [,,, _blockSize = 16] = argv._ as unknown[] as number[]
   const [,,,, paddingError] = argv._ as string[]|number[]
+  const blockSize = Math.abs(_blockSize)
   if (version) {
     console.log(PKG_NAME, 'v' + PKG_VERSION)
     return

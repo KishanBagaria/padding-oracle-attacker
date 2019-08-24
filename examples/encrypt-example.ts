@@ -1,4 +1,4 @@
-import encrypt from '../src/encrypt'
+import { encrypt } from 'padding-oracle-attacker'
 
 const json = { foo: 1, bar: { baz: 1337 } }
 const txt = JSON.stringify(json)

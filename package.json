@@ -1,6 +1,6 @@
 {
   "name": "padding-oracle-attacker",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "CLI tool and library to execute padding oracle attacks easily",
   "license": "MIT",
   "repository": "KishanBagaria/padding-oracle-attacker",
@@ -22,7 +22,8 @@
     "clean": "trash dist || rm -rf dist",
     "lint": "eslint --ext ts,js src/ test/",
     "test": "(yarn lint || npm run lint); ava",
-    "prepublishOnly": "yarn build || npm run build"
+    "prepublishOnly": "yarn build || npm run build",
+    "vuln-server": "node test/helpers/vulnerable-server.js"
   },
   "keywords": [
     "aes",

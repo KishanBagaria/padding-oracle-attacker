@@ -1,4 +1,4 @@
-import decrypt from '../src/decrypt'
+import { decrypt } from 'padding-oracle-attacker'
 
 const cipherHex = 'e3e70d8599206647dbc96952aaa209d75b4e3c494842aa1aa8931f51505df2a8a184e99501914312e2c50320835404e9'
 const ciphertext = Buffer.from(cipherHex, 'hex')
