@@ -21,7 +21,7 @@ async function decrypt(
 
   const foundBytes = Buffer.alloc(totalSize - blockSize) // plaintext bytes
   const interBytes = Buffer.alloc(totalSize - blockSize)
-  const foundOffsets = new Set()
+  const foundOffsets: Set<number> = new Set()
 
   if (alreadyFound && alreadyFound.length) {
     const startIndex = foundBytes.length - alreadyFound.length

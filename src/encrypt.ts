@@ -19,7 +19,7 @@ async function encrypt({ url, blockSize, logMode = 'full', plaintext: _plaintext
 
   const foundBytes = Buffer.alloc(totalSize) // ciphertext bytes
   const interBytes = Buffer.alloc(totalSize - blockSize)
-  const foundOffsets = new Set()
+  const foundOffsets: Set<number> = new Set()
 
   if (lastCiphertextBlock) {
     lastCiphertextBlock.copy(foundBytes, foundBytes.length - blockSize)
