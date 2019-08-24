@@ -74,5 +74,10 @@
     "get-port": "^5.0.0",
     "ts-node": "^8.1.0",
     "typescript": "^3"
+  },
+  "ava": {
+    "files": [
+      "test/*"
+    ]
   }
 }
