@@ -44,6 +44,9 @@ function colorizeHex({ cipherHex, totalSize, foundOffsets, currentByteColor, cur
   return result
 }
 
+const log = isTTY ? logUpdate : console.log
+const wrapAndSplit = (text: string, size: number) => wrapAnsi(text, size, { hard: true }).split('\n')
+
 interface LogProgressOptions {
   plaintext: Buffer
   ciphertext: Buffer
@@ -57,7 +60,6 @@ interface LogProgressOptions {
   startFromFirstBlock?: boolean
   isCacheEnabled?: boolean
 }
-const log = isTTY ? logUpdate : console.log
 export function logProgress(
   { plaintext, ciphertext, foundOffsets, blockSize, blockI, byteI, byte, decryptionSuccess, networkStats, startFromFirstBlock, isCacheEnabled }: LogProgressOptions
 ) {
@@ -74,18 +76,20 @@ export function logProgress(
       chalk[currentByteColor](currentByteHex),
       chalk.green(cipherHex.slice(greenStart))
     ].join('')
-  const plainUTF8 = plaintext.toString('utf8')
+
+  const printable = getPrintable(plaintext.toString('utf8'))
   const plainHex = plaintext.toString('hex')
+  const plainHexColorized = chalk.gray(plainHex.slice(0, grayEnd)) + plainHex.slice(grayEnd)
+  const plainHexSplit = wrapAndSplit(plainHexColorized, blockSize * 2)
+
   const percent = (foundOffsets.size + blockSize) / ciphertext.length
   const mapFunc = (ciphertextBlockHex: string, i: number) => {
     const xStart = (i - 1) * blockSize
-    const end = xStart + blockSize
-    const hex = plainHex.slice(2 * xStart, 2 * end)
-    const plain = getPrintable(plainUTF8.slice(xStart, end))
+    const plain = printable.slice(xStart, xStart + blockSize)
+    const hex = plainHexSplit[i - 1] || ''
     return `${(i + 1).toString().padStart(2)}. ${ciphertextBlockHex} ${hex} ${plain}`
   }
-  const cipherplain = wrapAnsi(colorized, blockSize * 2, { hard: true })
-    .split('\n')
+  const cipherplain = wrapAndSplit(colorized, blockSize * 2)
     .map(mapFunc)
     .join('\n')
   const { barComplete, barIncomplete } = getBar(percent, blockSize * 4 + 5)
