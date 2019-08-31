@@ -8,10 +8,9 @@ import { xor } from './util'
 
 const { logStart, logCompletion } = decryption
 
-async function decrypt(
-  { url, blockSize, logMode = 'full', ciphertext, isDecryptionSuccess, makeInitialRequest = true, alreadyFound, startFromFirstBlock, initFirstPayloadBlockWithOrigBytes, ...args }:
-  DecryptOptions
-) {
+async function decrypt({
+  url, blockSize, logMode = 'full', ciphertext, isDecryptionSuccess, makeInitialRequest = true, alreadyFound, startFromFirstBlock, initFirstPayloadBlockWithOrigBytes, ...args
+}: DecryptOptions) {
   ow(ciphertext, ow.buffer)
   ow(alreadyFound, ow.optional.buffer)
   if (ciphertext.length % blockSize !== 0) throw TypeError('Invalid `ciphertext`, should be evenly divisble by `blockSize`')

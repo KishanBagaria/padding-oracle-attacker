@@ -126,7 +126,7 @@ const PaddingOracle = (options: POOptions) => {
 
     if (logMode === 'full' && !stopLoggingProgress) {
       if (!(foundOffsets.has(offset) && !decryptionSuccess)) { // make sure concurrency doesn't cause former bytes progress to be logged after later byte
-        logProgress({ ciphertext, plaintext, foundOffsets, blockSize, blockI, byteI, byte, decryptionSuccess, networkStats, startFromFirstBlock })
+        logProgress({ ciphertext, plaintext, foundOffsets, blockSize, blockI, byteI, byte, decryptionSuccess, networkStats, startFromFirstBlock, isCacheEnabled })
       }
     }
 
@@ -155,7 +155,9 @@ const PaddingOracle = (options: POOptions) => {
       if (isDecrypting && !foundOffsets.has(offset)) {
         await processByte({ blockI, byteI, byte: cipherByte, currentPadding, offset })
       }
-      if (!foundOffsets.has(offset)) throw Error(`Padding oracle failure for offset: 0x${offset.toString(16)}. Try again or check the parameter you provided for determining decryption success.`)
+      if (!foundOffsets.has(offset)) {
+        throw Error(`Padding oracle failure for offset: 0x${offset.toString(16)}. Try again or check the parameter you provided for determining decryption success.`)
+      }
       if (!warningPrinted && badErrorArgConfidence > (blockSize / 2)) {
         logWarning('The parameter you provided for determining decryption success seems to be incorrect.')
         warningPrinted = true

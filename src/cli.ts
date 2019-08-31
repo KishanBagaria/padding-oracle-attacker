@@ -12,7 +12,15 @@ const hexToBuffer = (str: string) => Buffer.from(str.replace(/\s+/g, ''), 'hex')
 const argv = minimist(process.argv.slice(2), {
   string: ['method', 'header', 'data', 'payload-encoding'],
   boolean: ['version', 'disable-cache'],
-  alias: { v: 'version', c: 'concurrency', X: 'method', H: 'header', d: 'data', e: 'payload-encoding', 'start-from-first-block': 'start-from-1st-block' }
+  alias: {
+    v: 'version',
+    c: 'concurrency',
+    X: 'method',
+    H: 'header',
+    d: 'data',
+    e: 'payload-encoding',
+    'start-from-first-block': 'start-from-1st-block'
+  }
 })
 
 const USAGE = chalk`
@@ -68,8 +76,9 @@ const USAGE = chalk`
     padding-oracle-attack
 `
 
-// console.log(argv)
-const { version, method, H: headers, data, concurrency, e: payloadEncoding = 'hex', 'disable-cache': disableCache, 'start-from-1st-block': startFromFirstBlock } = argv
+const {
+  version, method, H: headers, data, concurrency, e: payloadEncoding = 'hex', 'disable-cache': disableCache, cache, 'start-from-1st-block': startFromFirstBlock
+} = argv
 
 const VALID_ENCODINGS = ['hex-uppercase', 'base64', 'base64-urlsafe', 'hex']
 async function main() {
@@ -134,7 +143,8 @@ You may want to set it to {inverse application/x-www-form-urlencoded} or {invers
     }
     return payload.toString('hex')
   }
-  const commonArgs = { url, blockSize, isDecryptionSuccess, transformPayload, concurrency, requestOptions, isCacheEnabled: !disableCache }
+  const isCacheEnabled = !disableCache && cache !== false
+  const commonArgs = { url, blockSize, isDecryptionSuccess, transformPayload, concurrency, requestOptions, isCacheEnabled }
   const cipherOrPlaintext = String(_cipherOrPlaintext)
   if (isDecrypt) {
     const bytes = hexToBuffer(cipherOrPlaintext.replace(/^hex:/, ''))

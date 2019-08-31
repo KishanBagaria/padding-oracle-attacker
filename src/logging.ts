@@ -55,9 +55,11 @@ interface LogProgressOptions {
   decryptionSuccess: boolean
   networkStats: { count: number, lastDownloadTime: number, bytesDown: number, bytesUp: number }
   startFromFirstBlock?: boolean
+  isCacheEnabled?: boolean
 }
+const log = isTTY ? logUpdate : console.log
 export function logProgress(
-  { plaintext, ciphertext, foundOffsets, blockSize, blockI, byteI, byte, decryptionSuccess, networkStats, startFromFirstBlock }: LogProgressOptions
+  { plaintext, ciphertext, foundOffsets, blockSize, blockI, byteI, byte, decryptionSuccess, networkStats, startFromFirstBlock, isCacheEnabled }: LogProgressOptions
 ) {
   const cipherHex = ciphertext.toString('hex')
   const currentByteHex = byte.toString(16).padStart(2, '0')
@@ -87,12 +89,17 @@ export function logProgress(
     .map(mapFunc)
     .join('\n')
   const { barComplete, barIncomplete } = getBar(percent, blockSize * 4 + 5)
-  const log = isTTY ? logUpdate : console.log
   log(
     cipherplain,
-    '\n' + barComplete + barIncomplete, (percent * 100).toFixed(1).padStart(5) + '%', `${blockI + 1}x${byteI + 1}`.padStart(5), `${byte}/256`.padStart(7),
-    chalk`\n\n{yellow ${networkStats.count.toString().padStart(4)}} total network requests | last request took {yellow ${networkStats.lastDownloadTime.toString().padStart(4)}ms}`,
-    chalk`| {yellow ${prettyBytes(networkStats.bytesDown).padStart(7)}} downloaded | {yellow ${prettyBytes(networkStats.bytesUp).padStart(7)}} uploaded`
+    '\n' + barComplete + barIncomplete,
+    (percent * 100).toFixed(1).padStart(5) + '%',
+    `${blockI + 1}x${byteI + 1}`.padStart(5),
+    `${byte}/256`.padStart(7),
+    chalk`\n\n{yellow ${networkStats.count.toString().padStart(4)}} total network requests`,
+    chalk`| last request took {yellow ${networkStats.lastDownloadTime.toString().padStart(4)}ms}`,
+    chalk`| {yellow ${prettyBytes(networkStats.bytesDown).padStart(7)}} downloaded`,
+    chalk`| {yellow ${prettyBytes(networkStats.bytesUp).padStart(7)}} uploaded`,
+    isCacheEnabled ? '' : chalk`| cache: {gray disabled}`
   )
 }
 export function logWarning(txt: string) {
@@ -115,7 +122,12 @@ function logRequest(request: OracleResult, logBody: boolean) {
 
 const logHeader = (h: string) => console.log(chalk.blue(`---${h}---`))
 
-interface LogStart { blockCount: number, totalSize: number, initialRequest?: Promise<OracleResult>, decryptionSuccess?: Promise<boolean> }
+interface LogStart {
+  blockCount: number
+  totalSize: number
+  initialRequest?: Promise<OracleResult>
+  decryptionSuccess?: Promise<boolean>
+}
 export const decryption = {
   async logStart({ blockCount, totalSize, initialRequest: _initialRequest, decryptionSuccess }: LogStart) {
     console.log(chalk.bold.white('~~~DECRYPTING~~~'))

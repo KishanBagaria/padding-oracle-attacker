@@ -7,7 +7,9 @@ import { EncryptOptions } from './types'
 
 const { logStart, logCompletion } = encryption
 
-async function encrypt({ url, blockSize, logMode = 'full', plaintext: _plaintext, makeFinalRequest = true, lastCiphertextBlock, ...args }: EncryptOptions) {
+async function encrypt({
+  url, blockSize, logMode = 'full', plaintext: _plaintext, makeFinalRequest = true, lastCiphertextBlock, ...args
+}: EncryptOptions) {
   ow(_plaintext, 'plaintext', ow.buffer)
   ow(lastCiphertextBlock, ow.optional.buffer)
   if (lastCiphertextBlock && lastCiphertextBlock.length !== blockSize) throw TypeError('Invalid `lastCiphertextBlock`, should have length equal to `blockSize`')
