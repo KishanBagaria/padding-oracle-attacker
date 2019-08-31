@@ -133,12 +133,12 @@ interface LogStart {
   decryptionSuccess?: Promise<boolean>
 }
 export const decryption = {
-  async logStart({ blockCount, totalSize, initialRequest: _initialRequest, decryptionSuccess }: LogStart) {
+  async logStart({ blockCount, totalSize, initialRequest: initialRequestPromise, decryptionSuccess }: LogStart) {
     console.log(chalk.bold.white('~~~DECRYPTING~~~'))
     console.log('total bytes:', chalk.yellow(String(totalSize)), '|', 'blocks:', chalk.yellow(String(blockCount - 1)))
     console.log()
     logHeader('making request with original ciphertext')
-    const initialRequest = await _initialRequest
+    const initialRequest = await initialRequestPromise
     if (initialRequest) {
       if (!await decryptionSuccess) {
         logWarning(`Decryption failed for initial request with original ciphertext.

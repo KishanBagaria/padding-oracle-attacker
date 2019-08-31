@@ -138,8 +138,12 @@ You may want to set it to {inverse application/x-www-form-urlencoded} or {invers
     if (payloadEncoding === 'base64-urlsafe') return payload.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
     if (payloadEncoding.startsWith('base64(')) {
       // base64 with custom alphabet. like "base64(-!~)"
-      const [x, y, z] = payloadEncoding.slice('base64('.length).split('')
-      return payload.toString('base64').replace(/\+/g, x).replace(/\//g, y).replace(/=/g, z)
+      const [plus, slash, equal] = payloadEncoding.slice('base64('.length).split('')
+      return payload
+        .toString('base64')
+        .replace(/\+/g, plus)
+        .replace(/\//g, slash)
+        .replace(/=/g, equal)
     }
     return payload.toString('hex')
   }
