@@ -3,7 +3,8 @@ import wrapAnsi from 'wrap-ansi'
 import logUpdate from 'log-update'
 import ansiStyles from 'ansi-styles'
 import prettyBytes from 'pretty-bytes'
-import { getPrintable } from './util'
+import { table, getBorderCharacters, TableUserConfig } from 'table'
+import { getStatusCodeColor, getPrintable } from './util'
 import { HeadersObject, OracleResult } from './types'
 
 const { isTTY } = process.stdout
@@ -47,6 +48,7 @@ function colorizeHex({ cipherHex, totalSize, foundOffsets, currentByteColor, cur
 const log = isTTY ? logUpdate : console.log
 const wrapAndSplit = (text: string, size: number) => wrapAnsi(text, size, { hard: true }).split('\n')
 
+interface NetworkStats { count: number, lastDownloadTime: number, bytesDown: number, bytesUp: number }
 interface LogProgressOptions {
   plaintext: Buffer
   ciphertext: Buffer
@@ -56,7 +58,7 @@ interface LogProgressOptions {
   byteI: number
   byte: number
   decryptionSuccess: boolean
-  networkStats: { count: number, lastDownloadTime: number, bytesDown: number, bytesUp: number }
+  networkStats: NetworkStats
   startFromFirstBlock?: boolean
   isCacheEnabled?: boolean
 }
@@ -87,7 +89,7 @@ export function logProgress(
     const xStart = (i - 1) * blockSize
     const plain = printable.slice(xStart, xStart + blockSize)
     const hex = plainHexSplit[i - 1] || ''
-    return `${(i + 1).toString().padStart(2)}. ${ciphertextBlockHex} ${hex} ${plain}`
+    return `${String(i + 1).padStart(2)}. ${ciphertextBlockHex} ${hex} ${plain}`
   }
   const cipherplain = wrapAndSplit(colorized, blockSize * 2)
     .map(mapFunc)
@@ -99,8 +101,8 @@ export function logProgress(
     (percent * 100).toFixed(1).padStart(5) + '%',
     `${blockI + 1}x${byteI + 1}`.padStart(5),
     `${byte}/256`.padStart(7),
-    chalk`\n\n{yellow ${networkStats.count.toString().padStart(4)}} total network requests`,
-    chalk`| last request took {yellow ${networkStats.lastDownloadTime.toString().padStart(4)}ms}`,
+    chalk`\n\n{yellow ${String(networkStats.count).padStart(4)}} total network requests`,
+    chalk`| last request took {yellow ${String(networkStats.lastDownloadTime).padStart(4)}ms}`,
     chalk`| {yellow ${prettyBytes(networkStats.bytesDown).padStart(7)}} downloaded`,
     chalk`| {yellow ${prettyBytes(networkStats.bytesUp).padStart(7)}} uploaded`,
     isCacheEnabled ? '' : chalk`| cache: {gray disabled}`
@@ -180,6 +182,93 @@ export const encryption = {
     if (!finalRequest) return
     logHeader('final http request')
     logRequest(finalRequest, true)
+    console.log()
+  }
+}
+interface AnalysisLogCompletion {
+  responsesTable: string[][]
+  statusCodeFreq: { [key: string]: number }
+  bodyLengthFreq: { [key: string]: number }
+  tmpDirPath?: string
+  networkStats: NetworkStats
+  isCacheEnabled: boolean
+}
+export const analysis = {
+  logStart({ url, blockSize }: { url: string, blockSize: number }) {
+    console.log(chalk.bold.white('~~~RESPONSE ANALYSIS~~~'))
+    console.log('url:', chalk.yellow(url), '|', 'block size:', chalk.yellow(String(blockSize)))
+    // console.log('will make 256 network requests and analyze responses')
+    console.log()
+  },
+  logCompletion({ responsesTable, statusCodeFreq, bodyLengthFreq, tmpDirPath, networkStats, isCacheEnabled }: AnalysisLogCompletion) {
+    const tableConfig = {
+      border: getBorderCharacters('void'),
+      columnDefault: { paddingLeft: 0, paddingRight: 2 },
+      singleLine: true
+    }
+    const secondTableConfig = {
+      border: getBorderCharacters('honeywell'),
+      columnDefault: { alignment: 'right', paddingLeft: 2, paddingRight: 2 },
+      singleLine: true
+    }
+    const headerRows = ['Byte', 'Status Code', 'Content Length'].map(x => chalk.gray(x))
+    const scFreqEntries = Object.entries(statusCodeFreq)
+    const clFreqEntries = Object.entries(bodyLengthFreq)
+    const tabled = table([headerRows, ...responsesTable], tableConfig)
+    logHeader('responses')
+    console.log(tabled)
+    logHeader('status code frequencies')
+
+    console.log(table(scFreqEntries.map(([k, v]) => [k, v + ' time(s)']), secondTableConfig as TableUserConfig))
+    logHeader('content length frequencies')
+    console.log(table(clFreqEntries.map(([k, v]) => [k, v + ' time(s)']), secondTableConfig as TableUserConfig))
+    logHeader('network stats')
+    console.log(
+      chalk`{yellow ${String(networkStats.count)}} total network requests`,
+      chalk`| last request took {yellow ${String(networkStats.lastDownloadTime)}ms}`,
+      chalk`| {yellow ${prettyBytes(networkStats.bytesDown)}} downloaded`,
+      chalk`| {yellow ${prettyBytes(networkStats.bytesUp)}} uploaded`,
+      isCacheEnabled ? '' : chalk`| cache: {gray disabled}`,
+      '\n'
+    )
+    if (tmpDirPath) {
+      logHeader('all responses saved to')
+      console.log(tmpDirPath + '\n')
+    }
+    logHeader('automated analysis')
+    const commonTips = [
+      tmpDirPath && chalk`{gray *} Inspect the saved responses in {underline ${tmpDirPath}}`,
+      chalk`{gray *} Change the <block_size> argument. Common block sizes are 8, 16, 32.`,
+      chalk`{gray *} Make sure the injection point {underline \{POPAYLOAD\}} is correctly set.`
+    ].filter(Boolean).join('\n')
+    if (scFreqEntries.length === 1 && clFreqEntries.length === 1) {
+      console.log("Responses don't seem to differ by status code or content length.\n" + commonTips)
+    } else if (scFreqEntries.length !== 2 && clFreqEntries.length !== 2) {
+      console.log('Responses seem to widely differ.\n' + commonTips)
+    } else {
+      if (scFreqEntries.length === 2) {
+        const errorStatusCode = scFreqEntries.find(([, v]) => v === 255)
+        const successStatusCode = scFreqEntries.find(([, v]) => v === 1)
+        if (successStatusCode && errorStatusCode) {
+          const sc = chalk[getStatusCodeColor(+errorStatusCode[0])](errorStatusCode[0])
+          console.log(chalk`Responses are likely to have a ${sc} status code when a decryption error occurs.\nYou can try specifying ${sc} for the {bold <error>} argument.\n`)
+        }
+      }
+      if (clFreqEntries.length === 2) {
+        const errorContentLength = clFreqEntries.find(([, v]) => v === 255)
+        const successContentLength = clFreqEntries.find(([, v]) => v === 1)
+        if (successContentLength && errorContentLength) {
+          console.log(
+            'Responses are likely to be sized',
+            chalk.yellow(errorContentLength[0]),
+            'bytes when a decryption error occurs.',
+            tmpDirPath
+              ? chalk`\nYou can find out how the response differs by inspecting the saved responses in\n{underline ${tmpDirPath}}\n`
+              : '\n'
+          )
+        }
+      }
+    }
     console.log()
   }
 }

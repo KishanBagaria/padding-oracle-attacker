@@ -1,3 +1,5 @@
+import { HeadersObject } from './types'
+
 export const xor = (b1: Buffer, b2: Buffer) => b1.map((byte, i) => byte ^ b2[i]) as Buffer
 
 export function addPadding(plaintext: Buffer, blockSize: number): Buffer {
@@ -18,4 +20,14 @@ export function getPrintable(str: string): string {
   const wsRe = /[\x09-\x10\x0D\u2028\u2029]/g
 
   return str.replace(re, '.').replace(wsRe, '.')
+}
+
+export const arrayifyHeaders = (headers: HeadersObject) => Object.entries(headers).map(([k, v]) => `${k}: ${v}`)
+export const stringifyHeaders = (headers: HeadersObject) => arrayifyHeaders(headers).join('\n')
+
+export function getStatusCodeColor(code: number) {
+  if (code >= 200 && code <= 299) return 'green'
+  if (code >= 300 && code <= 399) return 'yellow'
+  if (code >= 400 && code <= 499) return 'yellow'
+  return 'red'
 }

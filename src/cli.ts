@@ -3,11 +3,10 @@ import chalk from 'chalk'
 
 import decryptFunc from './decrypt'
 import encryptFunc from './encrypt'
+import analyzeFunc from './response-analysis'
 import { logError } from './logging'
 import { OracleResult } from './types'
 import { PKG_NAME, PKG_VERSION } from './constants'
-
-const hexToBuffer = (str: string) => Buffer.from(str.replace(/\s+/g, ''), 'hex')
 
 const argv = minimist(process.argv.slice(2), {
   string: ['method', 'header', 'data', 'payload-encoding'],
@@ -30,9 +29,14 @@ const USAGE = chalk`
     {gray $} padding-oracle-attacker encrypt <url> <plaintext>          <block_size> <error> [options]
     {gray $} padding-oracle-attacker encrypt <url> hex:<plaintext_hex>  <block_size> <error> [options]
 
+    {gray $} padding-oracle-attacker analyze <url> [<block_size>] [options]
+
   {inverse Commands}
     decrypt                 Finds the plaintext (foobar) for given ciphertext (hex:0123abcd)
     encrypt                 Finds the ciphertext (hex:abcd1234) for given plaintext (foo=bar)
+    analyze                 Helps find out if the URL is vulnerable or not, and
+                            how the response differs when a decryption error occurs
+                            (for the <error> argument)
 
   {inverse Arguments}
     <url>                   URL to attack. Payload will be inserted at the end by default. To specify
@@ -81,21 +85,41 @@ const {
 } = argv
 
 const VALID_ENCODINGS = ['hex-uppercase', 'base64', 'base64-urlsafe', 'hex']
+const DEFAULT_BLOCK_SIZE = 16
+
+const toBase64Custom = (buffer: Buffer, [plusChar, slashChar, equalChar]: string) => buffer
+  .toString('base64')
+  .replace(/\+/g, plusChar || '')
+  .replace(/\//g, slashChar || '')
+  .replace(/=/g, equalChar || '')
+
+const hexToBuffer = (str: string) => Buffer.from(str.replace(/\s+/g, ''), 'hex')
+const b64ToBuffer = (str: string) => Buffer.from(str.replace(/\s+/g, ''), 'base64')
+function strToBuffer(input: string, fromPlain: boolean = true) {
+  if (input.startsWith('hex:')) return hexToBuffer(input.slice('hex:'.length))
+  if (input.startsWith('base64:')) return b64ToBuffer(input.slice('base64:'.length))
+  if (input.startsWith('b64:')) return b64ToBuffer(input.slice('b64:'.length))
+  if (input.startsWith('utf8:')) return Buffer.from(input.slice('utf8:'.length), 'utf8')
+  if (fromPlain) return Buffer.from(input, 'utf8')
+  throw Error('Input string should start with `hex:` or `base64:`/`b64:`')
+}
 async function main() {
-  const [operation, url, _cipherOrPlaintext] = argv._
-  const [,,, _blockSize = 16] = argv._ as unknown[] as number[]
-  const [,,,, paddingError] = argv._ as string[]|number[]
-  const blockSize = Math.abs(_blockSize)
+  const [operation, url] = argv._
+  const [,, thirdArg, fourthArg, paddingError] = argv._ as string[] | number[]
   if (version) {
     console.log(PKG_NAME, 'v' + PKG_VERSION)
     return
   }
   const isEncrypt = operation === 'encrypt'
   const isDecrypt = operation === 'decrypt'
+  const isAnalyze = ['analyze', 'analyse'].includes(operation)
+  const blockSize = Math.abs(isAnalyze ? +thirdArg : +fourthArg) || DEFAULT_BLOCK_SIZE
   const requestOptions = { method, headers, data }
+  const cipherOrPlaintext = String(thirdArg)
   if (
-    (!isEncrypt && !isDecrypt) || !url || !_cipherOrPlaintext || !blockSize || !paddingError
+    (!isEncrypt && !isDecrypt && !isAnalyze) || !url
     || Array.isArray(method) || Array.isArray(concurrency) || Array.isArray(data)
+    || (!isAnalyze && (!cipherOrPlaintext || !blockSize || !paddingError))
   ) {
     console.error(USAGE)
     return
@@ -104,12 +128,8 @@ async function main() {
     console.error(chalk`{red Invalid argument:} <url>\nMust start with http: or https:`)
     return
   }
-  if (blockSize < 1) {
-    console.error(chalk`{red Invalid argument:} <block_size>`)
-    return
-  }
   if (!isNaN(paddingError as number) && (paddingError < 100 || paddingError > 599)) {
-    console.error(chalk`{red Invalid option:} --error\nNot a valid status code`)
+    console.error(chalk`{red Invalid argument:} <error>\nNot a valid status code`)
     return
   }
   if (!VALID_ENCODINGS.includes(payloadEncoding) && !payloadEncoding.startsWith('base64(')) {
@@ -117,7 +137,7 @@ async function main() {
 {yellow.underline Warning}: ${payloadEncoding} is unrecognized. Defaulting to hex.
 `)
   }
-  if (isEncrypt && startFromFirstBlock) {
+  if (!isDecrypt && startFromFirstBlock) {
     console.error(chalk`
 {yellow.underline Warning}: Can only start from first block while decrypting.
 `)
@@ -135,34 +155,29 @@ You may want to set it to {inverse application/x-www-form-urlencoded} or {invers
   const transformPayload = (payload: Buffer) => {
     if (payloadEncoding === 'hex-uppercase') return payload.toString('hex').toUpperCase()
     if (payloadEncoding === 'base64') return payload.toString('base64')
-    if (payloadEncoding === 'base64-urlsafe') return payload.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    if (payloadEncoding === 'base64-urlsafe') return toBase64Custom(payload, '-_')
     if (payloadEncoding.startsWith('base64(')) {
       // base64 with custom alphabet. like "base64(-!~)"
-      const [plus, slash, equal] = payloadEncoding.slice('base64('.length).split('')
-      return payload
-        .toString('base64')
-        .replace(/\+/g, plus)
-        .replace(/\//g, slash)
-        .replace(/=/g, equal)
+      const chars = payloadEncoding.slice('base64('.length).split('')
+      return toBase64Custom(payload, chars)
     }
     return payload.toString('hex')
   }
   const isCacheEnabled = !disableCache && cache !== false
   const commonArgs = { url, blockSize, isDecryptionSuccess, transformPayload, concurrency, requestOptions, isCacheEnabled }
-  const cipherOrPlaintext = String(_cipherOrPlaintext)
   if (isDecrypt) {
-    const bytes = hexToBuffer(cipherOrPlaintext.replace(/^hex:/, ''))
     await decryptFunc({
       ...commonArgs,
-      ciphertext: bytes,
+      ciphertext: strToBuffer(cipherOrPlaintext, false),
       startFromFirstBlock
     })
-  } else {
-    const bytes = cipherOrPlaintext.startsWith('hex:') ? hexToBuffer(cipherOrPlaintext.slice(4)) : Buffer.from(cipherOrPlaintext, 'utf8')
+  } else if (isEncrypt) {
     await encryptFunc({
       ...commonArgs,
-      plaintext: bytes
+      plaintext: strToBuffer(cipherOrPlaintext)
     })
+  } else if (isAnalyze) {
+    await analyzeFunc(commonArgs)
   }
 }
 

@@ -6,17 +6,24 @@ interface RequestOptions {
   headers?: string | string[] | HeadersObject
   data?: string
 }
-interface OptionsBase {
+export interface OracleCallerOptions {
   url: string
-  blockSize: number
-  isDecryptionSuccess: (oracleResult: OracleResult) => boolean
   requestOptions?: RequestOptions
-  concurrency?: number
   transformPayload?: (payload: Buffer) => string
-  logMode?: 'full' | 'minimal' | 'none'
   isCacheEnabled?: boolean
+  logMode?: 'full' | 'minimal' | 'none'
 }
-export interface POOptions extends OptionsBase {
+interface OptionsBase extends OracleCallerOptions {
+  blockSize: number
+  concurrency?: number
+  isDecryptionSuccess: (oracleResult: OracleResult) => boolean
+}
+export interface ResponseAnalysisOptions extends OracleCallerOptions {
+  blockSize: number
+  concurrency?: number
+  saveResponsesToTmpDir?: boolean
+}
+export interface PaddingOracleOptions extends OptionsBase {
   ciphertext: Buffer
   plaintext: Buffer
   blockCount: number

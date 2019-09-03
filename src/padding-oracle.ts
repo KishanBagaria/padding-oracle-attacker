@@ -1,44 +1,19 @@
 import bluebird from './bluebird' // eslint-disable-line import/order
 
-import got from 'got'
 import ow from 'ow'
-import { pick, range } from 'lodash'
-import cacheStore from './cache'
+import { range } from 'lodash'
 
-import { DEFAULT_USER_AGENT } from './constants'
 import { logProgress, logWarning } from './logging'
 import waitUntilFirstTruthyPromise from './promises'
-import { HeadersObject, OracleResult, POOptions } from './types'
+import { PaddingOracleOptions } from './types'
+import OracleCaller from './oracle-caller'
 
-type AddPayload = (str?: string) => string | undefined
-
-function getHeaders(headersArg: string | string[] | HeadersObject | undefined, addPayload: AddPayload) {
-  if (!headersArg) return {}
-  const headersArr = (() => {
-    if (Array.isArray(headersArg)) return headersArg
-    if (typeof headersArg === 'object') return Object.entries(headersArg).map(([k, v]) => `${k}: ${v}`)
-    return [headersArg]
-  })()
-  const headers: HeadersObject = {}
-  for (const _header of headersArr) {
-    ow(_header, 'header', ow.string)
-    const header = addPayload(_header) as string
-    const index = header.indexOf(':')
-    if (index < 1) throw TypeError(`Invalid header: ${header}`)
-    const name = index > 0 ? header.slice(0, index).trim() : header
-    headers[name] = header.slice(index + 1).trimLeft()
-  }
-  return headers
-}
-
-const POPAYLOAD = '{POPAYLOAD}'
-const injectionRegex = new RegExp(POPAYLOAD, 'ig')
-
-const PaddingOracle = (options: POOptions) => {
+const PaddingOracle = (options: PaddingOracleOptions) => {
+  const { networkStats, callOracle } = OracleCaller(options)
   const {
     ciphertext, plaintext, origBytes, foundBytes, interBytes, foundOffsets,
     url: _url, blockSize, blockCount, startFromFirstBlock,
-    transformPayload, requestOptions = {}, concurrency = 128, isDecryptionSuccess,
+    transformPayload, concurrency = 128, isDecryptionSuccess,
     logMode = 'full', isCacheEnabled = true, initFirstPayloadBlockWithOrigBytes = false
   } = options
   ow(_url, 'url', ow.string)
@@ -46,48 +21,10 @@ const PaddingOracle = (options: POOptions) => {
   ow(concurrency, ow.number)
   ow(isDecryptionSuccess, ow.function)
   if (transformPayload) ow(transformPayload, ow.function)
-  ow(requestOptions, ow.object)
-  ow(requestOptions.method, ow.optional.string)
-  if (requestOptions.headers) ow(requestOptions.headers, ow.any(ow.object, ow.string, ow.array))
-  ow(requestOptions.data, ow.optional.string)
   ow(logMode, ow.string)
 
-  const { method, headers, data } = requestOptions
-  const injectionStringPresent = !_url.includes(POPAYLOAD)
-    && !String(typeof headers === 'object' ? JSON.stringify(headers) : headers).includes(POPAYLOAD)
-    && !(data || '').includes(POPAYLOAD)
-  const networkStats = { count: 0, lastDownloadTime: 0, bytesDown: 0, bytesUp: 0 }
   let stopLoggingProgress = false
 
-  async function callOracle(payload: Buffer): Promise<{ url: string, statusCode: number, headers: HeadersObject, body: string }> {
-    const payloadString = transformPayload ? transformPayload(payload) : payload.toString('hex')
-    const addPayload: AddPayload = str => (str ? str.replace(injectionRegex, payloadString) : str)
-    const url = (injectionStringPresent ? _url + payloadString : addPayload(_url)) as string
-    const customHeaders = getHeaders(headers, addPayload)
-    const body = addPayload(data)
-    const cacheKey = [url, JSON.stringify(customHeaders), body].join('|')
-    if (isCacheEnabled) {
-      const cached = await cacheStore.get(cacheKey) as OracleResult
-      if (cached) return { url, ...cached }
-    }
-    const response = await got(url, {
-      throwHttpErrors: false,
-      method,
-      headers: {
-        'user-agent': DEFAULT_USER_AGENT,
-        ...customHeaders
-      },
-      body
-    })
-    networkStats.count++
-    // @ts-ignore because `got` type definitions aren't complete
-    networkStats.lastDownloadTime = response.timings.phases.total
-    networkStats.bytesDown += response.socket.bytesRead || 0
-    networkStats.bytesUp += response.socket.bytesWritten || 0
-    const result = pick(response, ['statusCode', 'headers', 'body']) as OracleResult
-    if (isCacheEnabled) await cacheStore.set(cacheKey, result)
-    return { url, ...result }
-  }
   function constructPayload({ byteI, blockI, byte, currentPadding }: { byteI: number, blockI: number, byte: number, currentPadding: number }) {
     const firstBlock = Buffer.alloc(blockSize)
     if (initFirstPayloadBlockWithOrigBytes) ciphertext.copy(firstBlock, 0, blockI * blockSize)

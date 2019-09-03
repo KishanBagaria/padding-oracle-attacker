@@ -9,7 +9,8 @@ const randomBytes = util.promisify(crypto.randomBytes)
 const DEFAULT_KEY = Buffer.from('00112233445566778899112233445566', 'hex')
 
 function run(args) {
-  const { port = 2020, loggingEnabled, encryptionAlgo = 'aes-128-cbc', blockSize = 16, key = DEFAULT_KEY } = args || {}
+  const { port = 2020, loggingEnabled, encryptionAlgo = 'aes-128-cbc', key = DEFAULT_KEY } = args || {}
+  const blockSize = +args.blockSize || 16
   const defaultEncoding = 'hex'
 
   const app = express()
@@ -36,12 +37,12 @@ function run(args) {
       res.sendStatus(400)
       return
     }
-    const ivHex = ciphertext.slice(0, blockSize * 2)
-    const iv = Buffer.from(ivHex, defaultEncoding)
-    const ciphertextBuffer = Buffer.from(ciphertext, defaultEncoding).slice(blockSize)
+    const fullBuffer = Buffer.from(ciphertext, defaultEncoding)
+    const ivBuffer = fullBuffer.slice(0, blockSize)
+    const ciphertextBuffer = fullBuffer.slice(blockSize)
     const reqDetails = [req.method, req.headers, req.body]
     try {
-      const decrypted = decrypt(encryptionAlgo, ciphertextBuffer, key, iv)
+      const decrypted = decrypt(encryptionAlgo, ciphertextBuffer, key, ivBuffer)
       const txt = decrypted.toString('utf8')
       if (loggingEnabled) console.log(200, ciphertext, txt, ...reqDetails)
       if (includeHeaders) res.json({ headers: req.headers, decrypted: txt })

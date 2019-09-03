@@ -25,9 +25,14 @@ Usage
   $ padding-oracle-attacker encrypt <url> <plaintext>          <block_size> <error> [options]
   $ padding-oracle-attacker encrypt <url> hex:<plaintext_hex>  <block_size> <error> [options]
 
+  $ padding-oracle-attacker analyze <url> [<block_size>] [options]
+
 Commands
   decrypt                 Finds the plaintext (foobar) for given ciphertext (hex:0123abcd)
   encrypt                 Finds the ciphertext (hex:abcd1234) for given plaintext (foo=bar)
+  analyze                 Helps find out if the URL is vulnerable or not, and
+                          how the response differs when a decryption error occurs
+                          (for the <error> argument)
 
 Arguments
   <url>                   URL to attack. Payload will be inserted at the end by default. To specify
