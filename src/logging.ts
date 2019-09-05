@@ -201,12 +201,12 @@ export const analysis = {
     console.log()
   },
   logCompletion({ responsesTable, statusCodeFreq, bodyLengthFreq, tmpDirPath, networkStats, isCacheEnabled }: AnalysisLogCompletion) {
-    const tableConfig = {
+    const tableConfig: TableUserConfig = {
       border: getBorderCharacters('void'),
       columnDefault: { paddingLeft: 0, paddingRight: 2 },
       singleLine: true
     }
-    const secondTableConfig = {
+    const secondTableConfig: TableUserConfig = {
       border: getBorderCharacters('honeywell'),
       columnDefault: { alignment: 'right', paddingLeft: 2, paddingRight: 2 },
       singleLine: true
@@ -219,9 +219,9 @@ export const analysis = {
     console.log(tabled)
     logHeader('status code frequencies')
 
-    console.log(table(scFreqEntries.map(([k, v]) => [k, v + ' time(s)']), secondTableConfig as TableUserConfig))
+    console.log(table(scFreqEntries.map(([k, v]) => [k, v + ' time(s)']), secondTableConfig))
     logHeader('content length frequencies')
-    console.log(table(clFreqEntries.map(([k, v]) => [k, v + ' time(s)']), secondTableConfig as TableUserConfig))
+    console.log(table(clFreqEntries.map(([k, v]) => [k, v + ' time(s)']), secondTableConfig))
     logHeader('network stats')
     console.log(
       chalk`{yellow ${String(networkStats.count)}} total network requests`,
