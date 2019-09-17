@@ -186,6 +186,7 @@ Runs the test server which is vulnerable to padding oracle attacks at <http://lo
 
 * [PadBuster](https://github.com/GDSSecurity/PadBuster) (Perl)
 * [Padding Oracle Attack](https://github.com/mpgn/Padding-oracle-attack) (Python)
+* [python-paddingoracle](https://github.com/mwielgoszewski/python-paddingoracle) (Python)
 * [Poracle](https://github.com/iagox86/poracle) (Ruby)
 
 ## License
