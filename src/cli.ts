@@ -25,6 +25,7 @@ const argv = minimist(process.argv.slice(2), {
 const USAGE = chalk`
   {inverse Usage}
     {gray $} padding-oracle-attacker decrypt <url> hex:<ciphertext_hex> <block_size> <error> [options]
+    {gray $} padding-oracle-attacker decrypt <url> b64:<ciphertext_b64> <block_size> <error> [options]
 
     {gray $} padding-oracle-attacker encrypt <url> <plaintext>          <block_size> <error> [options]
     {gray $} padding-oracle-attacker encrypt <url> hex:<plaintext_hex>  <block_size> <error> [options]
