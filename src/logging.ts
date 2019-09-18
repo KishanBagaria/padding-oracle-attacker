@@ -117,11 +117,14 @@ export function logWarning(txt: string) {
 
 const stringifyHeaders = (headers: HeadersObject) => Object.entries(headers).map(([k, v]) => `${chalk.gray(k.padEnd(20))}: ${v}`).join('\n')
 
-function logRequest(request: OracleResult, logBody: boolean) {
+function logRequest(request: OracleResult) {
   console.log(request.statusCode, request.url)
   console.log(stringifyHeaders(request.headers))
-  if (logBody) {
-    console.log()
+  console.log()
+  const size = request.body.length
+  if (size > 1024) {
+    console.log(request.body.slice(0, 1024), chalk.gray(`[...and ${(size - 1024).toLocaleString()} more bytes]`))
+  } else {
     console.log(request.body)
   }
 }
@@ -146,7 +149,7 @@ export const decryption = {
         logWarning(`Decryption failed for initial request with original ciphertext.
 The parameter you provided for determining decryption success seems to be incorrect.`)
       }
-      logRequest(initialRequest, initialRequest.body.length < 1024)
+      logRequest(initialRequest)
     }
     console.log()
   },
@@ -181,7 +184,7 @@ export const encryption = {
     console.log()
     if (!finalRequest) return
     logHeader('final http request')
-    logRequest(finalRequest, true)
+    logRequest(finalRequest)
     console.log()
   }
 }
