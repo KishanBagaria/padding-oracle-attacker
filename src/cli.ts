@@ -75,6 +75,7 @@ const USAGE = chalk`
         hex:e3e70d8599206647dbc96952aaa209d75b4e3c494842aa1aa8931f51505df2a8a184e99501914312e2c50320835404e9 16 400
     {gray $} poattack encrypt http://localhost:2020/decrypt?ciphertext= "foo bar 🦄" 16 400
     {gray $} poattack encrypt http://localhost:2020/decrypt?ciphertext= hex:666f6f2062617220f09fa684 16 400
+    {gray $} poattack analyze http://localhost:2020/decrypt?ciphertext=
   
   {inverse Aliases}
     poattack

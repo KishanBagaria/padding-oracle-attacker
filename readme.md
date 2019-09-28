@@ -72,6 +72,7 @@ Examples
       16 400
   $ poattack encrypt http://localhost:2020/decrypt?ciphertext= "foo bar 🦄" 16 400
   $ poattack encrypt http://localhost:2020/decrypt?ciphertext= hex:666f6f2062617220f09fa684 16 400
+  $ poattack analyze http://localhost:2020/decrypt?ciphertext=
 
 Aliases
   poattack
