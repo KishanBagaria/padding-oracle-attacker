@@ -51,7 +51,7 @@ const OracleCaller = (options: OracleCallerOptions) => {
     && !(data || '').includes(POPAYLOAD)
   const networkStats = { count: 0, lastDownloadTime: 0, bytesDown: 0, bytesUp: 0 }
 
-  async function callOracle(payload: Buffer): Promise<{ url: string, statusCode: number, headers: HeadersObject, body: string }> {
+  async function callOracle(payload: Buffer): Promise<OracleResult> {
     const payloadString = transformPayload ? transformPayload(payload) : payload.toString('hex')
     const addPayload: AddPayload = str => (str ? str.replace(injectionRegex, payloadString) : str)
     const url = (injectionStringPresent ? _url + payloadString : addPayload(_url)) as string

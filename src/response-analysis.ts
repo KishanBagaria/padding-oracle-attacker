@@ -14,6 +14,18 @@ import { getStatusCodeColor, stringifyHeaders } from './util'
 
 const { logStart, logCompletion } = analysis
 
+type OracleResultWithPayload = OracleResult & { payload: Buffer }
+
+const getResponseText = (res: OracleResultWithPayload) => `<!--
+Saved by https://github.com/KishanBagaria/padding-oracle-attacker
+From ${res.url}
+Payload: ${res.payload.toString('hex')}
+
+${res.statusCode}
+${stringifyHeaders(res.headers)}
+-->
+${res.body}`
+
 const byteRange = range(0, 256)
 async function analyseResponses({
   url, blockSize, logMode = 'full', concurrency = 128, isCacheEnabled = true, saveResponsesToTmpDir = true, ...args
@@ -27,7 +39,7 @@ async function analyseResponses({
 
   const statusCodeFreq: {[key: string]: number} = {}
   const bodyLengthFreq: {[key: string]: number} = {}
-  const responses: {[key: number]: OracleResult} = {}
+  const responses: {[key: number]: OracleResultWithPayload} = {}
   const rows: string[][] = []
   async function processByte(byte: number) {
     const twoBlocks = Buffer.alloc(blockSize * 2)
@@ -35,7 +47,7 @@ async function analyseResponses({
     const req = await callOracle(twoBlocks)
     const { statusCode } = req
     const cl = req.body.length
-    responses[byte] = req
+    responses[byte] = { ...req, payload: twoBlocks }
     statusCodeFreq[statusCode] = (statusCodeFreq[statusCode] || 0) + 1
     bodyLengthFreq[cl] = (bodyLengthFreq[cl] || 0) + 1
     const color = getStatusCodeColor(statusCode)
@@ -50,12 +62,7 @@ async function analyseResponses({
   const tmpDirPath = saveResponsesToTmpDir ? (await tmp.dir({ prefix: 'poattack_' })).path : ''
   if (saveResponsesToTmpDir) {
     await bluebird.map(Object.entries(responses),
-      ([byte, res]) => fse.writeFile(path.join(tmpDirPath, byte + '.html'), `<!--
-Saved by https://github.com/KishanBagaria/padding-oracle-attacker
-${res.statusCode}
-${stringifyHeaders(res.headers)}
--->
-${res.body}`))
+      ([byte, res]) => fse.writeFile(path.join(tmpDirPath, byte + '.html'), getResponseText(res)))
   }
 
 

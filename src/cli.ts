@@ -85,7 +85,16 @@ const USAGE = chalk`
 `
 
 const {
-  version, method, H: headers, data, concurrency, e: payloadEncoding = 'hex', 'disable-cache': disableCache, cache, 'start-from-1st-block': startFromFirstBlock, 'dont-urlencode-payload': dontURLEncodePayload
+  version,
+  method,
+  H: headers,
+  data,
+  concurrency,
+  e: payloadEncoding = 'hex',
+  'disable-cache': disableCache,
+  cache,
+  'start-from-1st-block': startFromFirstBlock,
+  'dont-urlencode-payload': dontURLEncodePayload
 } = argv
 
 const VALID_ENCODINGS = ['hex-uppercase', 'base64', 'base64-urlsafe', 'hex']
