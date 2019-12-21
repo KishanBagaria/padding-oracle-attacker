@@ -4,6 +4,7 @@ extends: [airbnb-base, plugin:@typescript-eslint/recommended]
 rules:
   semi: [error, never]
   comma-dangle: [error, never]
+  import/extensions: [error, never]
   max-len: [warn, 180]
   prefer-template: off
   no-await-in-loop: off
