@@ -33,42 +33,44 @@ const USAGE = chalk`
     {gray $} padding-oracle-attacker analyze <url> [<block_size>] [options]
 
   {inverse Commands}
-    decrypt                 Finds the plaintext (foobar) for given ciphertext (hex:0123abcd)
-    encrypt                 Finds the ciphertext (hex:abcd1234) for given plaintext (foo=bar)
-    analyze                 Helps find out if the URL is vulnerable or not, and
-                            how the response differs when a decryption error occurs
-                            (for the <error> argument)
+    decrypt                  Finds the plaintext (foobar) for given ciphertext (hex:0123abcd)
+    encrypt                  Finds the ciphertext (hex:abcd1234) for given plaintext (foo=bar)
+    analyze                  Helps find out if the URL is vulnerable or not, and
+                             how the response differs when a decryption error occurs
+                             (for the <error> argument)
 
   {inverse Arguments}
-    <url>                   URL to attack. Payload will be inserted at the end by default. To specify
-                            a custom injection point, include {underline \{POPAYLOAD\}} in a header (-H),
-                            request body (-d) or the URL
-    <block_size>            Block size used by the encryption algorithm on the server
-    <error>                 The string present in response when decryption fails on the server.
-                            Specify a string present in the HTTP response body (like PaddingException)
-                            or status code of the HTTP response (like 400)
+    <url>                    URL to attack. Payload will be inserted at the end by default. To specify
+                             a custom injection point, include {underline \{POPAYLOAD\}} in a header (-H),
+                             request body (-d) or the URL
+    <block_size>             Block size used by the encryption algorithm on the server
+    <error>                  The string present in response when decryption fails on the server.
+                             Specify a string present in the HTTP response body (like PaddingException)
+                             or status code of the HTTP response (like 400)
 
   {inverse Options}
-    -c, --concurrency       Requests to be sent concurrently                      [default: 128]
-        --disable-cache     Disable network cache. Saved to                       [default: false]
-                            poattack-cache.json.gz.txt by default
-    -X, --method            HTTP method to use while making request               [default: GET]
-    -H, --header            Headers to be sent with request.
-                              -H 'Cookie: cookie1' -H 'User-Agent: Googlebot/2.1'
-    -d, --data              Request body
-                              JSON string: \{"id": 101, "foo": "bar"\}
-                              URL encoded: id=101&foo=bar
-                            Make sure to specify the Content-Type header.
+    -c, --concurrency        Requests to be sent concurrently                      [default: 128]
+        --disable-cache      Disable network cache. Saved to                       [default: false]
+                             poattack-cache.json.gz.txt by default
+    -X, --method             HTTP method to use while making request               [default: GET]
+    -H, --header             Headers to be sent with request.
+                               -H 'Cookie: cookie1' -H 'User-Agent: Googlebot/2.1'
+    -d, --data               Request body
+                               JSON string: \{"id": 101, "foo": "bar"\}
+                               URL encoded: id=101&foo=bar
+                             Make sure to specify the Content-Type header.
 
-    -e, --payload-encoding  Ciphertext payload encoding for {underline \{POPAYLOAD\}}           [default: hex]
-                              base64          FooBar+/=
-                              base64-urlsafe  FooBar-_
-                              hex             deadbeef
-                              hex-uppercase   DEADBEEF
-                              base64(xyz)     Custom base64 ('xyz' represent characters for '+/=')
+    -e, --payload-encoding   Ciphertext payload encoding for {underline \{POPAYLOAD\}}           [default: hex]
+                               base64          FooBar+/=
+                               base64-urlsafe  FooBar-_
+                               hex             deadbeef
+                               hex-uppercase   DEADBEEF
+                               base64(xyz)     Custom base64 ('xyz' represent characters for '+/=')
 
-    --start-from-1st-block  Start processing from the first block instead         [default: false]
-                            of the last (only works with decrypt mode)
+    --dont-urlencode-payload Don't URL encode {underline \{POPAYLOAD\}}                          [default: false]
+
+    --start-from-1st-block   Start processing from the first block instead         [default: false]
+                             of the last (only works with decrypt mode)
 
   {inverse Examples}
     {gray $} poattack decrypt http://localhost:2020/decrypt?ciphertext=
@@ -83,7 +85,7 @@ const USAGE = chalk`
 `
 
 const {
-  version, method, H: headers, data, concurrency, e: payloadEncoding = 'hex', 'disable-cache': disableCache, cache, 'start-from-1st-block': startFromFirstBlock
+  version, method, H: headers, data, concurrency, e: payloadEncoding = 'hex', 'disable-cache': disableCache, cache, 'start-from-1st-block': startFromFirstBlock, 'dont-urlencode-payload': dontURLEncodePayload
 } = argv
 
 const VALID_ENCODINGS = ['hex-uppercase', 'base64', 'base64-urlsafe', 'hex']
@@ -155,13 +157,14 @@ You may want to set it to {inverse application/x-www-form-urlencoded} or {invers
     return !body.includes(paddingError as unknown as string)
   }
   const transformPayload = (payload: Buffer) => {
+    const urlencode = dontURLEncodePayload ? (i: string) => i : encodeURIComponent
     if (payloadEncoding === 'hex-uppercase') return payload.toString('hex').toUpperCase()
-    if (payloadEncoding === 'base64') return payload.toString('base64')
-    if (payloadEncoding === 'base64-urlsafe') return toBase64Custom(payload, '-_')
+    if (payloadEncoding === 'base64') return urlencode(payload.toString('base64'))
+    if (payloadEncoding === 'base64-urlsafe') return urlencode(toBase64Custom(payload, '-_'))
     if (payloadEncoding.startsWith('base64(')) {
       // base64 with custom alphabet. like "base64(-!~)"
       const chars = payloadEncoding.slice('base64('.length).split('')
-      return toBase64Custom(payload, chars)
+      return urlencode(toBase64Custom(payload, chars))
     }
     return payload.toString('hex')
   }

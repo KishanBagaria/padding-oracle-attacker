@@ -29,42 +29,44 @@ Usage
   $ padding-oracle-attacker analyze <url> [<block_size>] [options]
 
 Commands
-  decrypt                 Finds the plaintext (foobar) for given ciphertext (hex:0123abcd)
-  encrypt                 Finds the ciphertext (hex:abcd1234) for given plaintext (foo=bar)
-  analyze                 Helps find out if the URL is vulnerable or not, and
-                          how the response differs when a decryption error occurs
-                          (for the <error> argument)
+  decrypt                  Finds the plaintext (foobar) for given ciphertext (hex:0123abcd)
+  encrypt                  Finds the ciphertext (hex:abcd1234) for given plaintext (foo=bar)
+  analyze                  Helps find out if the URL is vulnerable or not, and
+                           how the response differs when a decryption error occurs
+                           (for the <error> argument)
 
 Arguments
-  <url>                   URL to attack. Payload will be inserted at the end by default. To specify
-                          a custom injection point, include {POPAYLOAD} in a header (-H),
-                          request body (-d) or the URL
-  <block_size>            Block size used by the encryption algorithm on the server
-  <error>                 The string present in response when decryption fails on the server.
-                          Specify a string present in the HTTP response body (like PaddingException)
-                          or status code of the HTTP response (like 400)
+  <url>                    URL to attack. Payload will be inserted at the end by default. To specify
+                           a custom injection point, include {POPAYLOAD} in a header (-H),
+                           request body (-d) or the URL
+  <block_size>             Block size used by the encryption algorithm on the server
+  <error>                  The string present in response when decryption fails on the server.
+                           Specify a string present in the HTTP response body (like PaddingException)
+                           or status code of the HTTP response (like 400)
 
 Options
-  -c, --concurrency       Requests to be sent concurrently                      [default: 128]
-      --disable-cache     Disable network cache. Saved to                       [default: false]
-                          poattack-cache.json.gz.txt by default
-  -X, --method            HTTP method to use while making request               [default: GET]
-  -H, --header            Headers to be sent with request.
-                            -H 'Cookie: cookie1' -H 'User-Agent: Googlebot/2.1'
-  -d, --data              Request body
-                            JSON string: {"id": 101, "foo": "bar"}
-                            URL encoded: id=101&foo=bar
-                          Make sure to specify the Content-Type header.
+  -c, --concurrency        Requests to be sent concurrently                      [default: 128]
+      --disable-cache      Disable network cache. Saved to                       [default: false]
+                           poattack-cache.json.gz.txt by default
+  -X, --method             HTTP method to use while making request               [default: GET]
+  -H, --header             Headers to be sent with request.
+                             -H 'Cookie: cookie1' -H 'User-Agent: Googlebot/2.1'
+  -d, --data               Request body
+                             JSON string: {"id": 101, "foo": "bar"}
+                             URL encoded: id=101&foo=bar
+                           Make sure to specify the Content-Type header.
 
-  -e, --payload-encoding  Ciphertext payload encoding for {POPAYLOAD}           [default: hex]
-                            base64          FooBar+/=
-                            base64-urlsafe  FooBar-_
-                            hex             deadbeef
-                            hex-uppercase   DEADBEEF
-                            base64(xyz)     Custom base64 ('xyz' represent characters for '+/=')
+  -e, --payload-encoding   Ciphertext payload encoding for {POPAYLOAD}           [default: hex]
+                             base64          FooBar+/=
+                             base64-urlsafe  FooBar-_
+                             hex             deadbeef
+                             hex-uppercase   DEADBEEF
+                             base64(xyz)     Custom base64 ('xyz' represent characters for '+/=')
 
-  --start-from-1st-block  Start processing from the first block instead         [default: false]
-                          of the last (only works with decrypt mode)
+  --dont-urlencode-payload Don't URL encode {POPAYLOAD}                          [default: false]
+
+  --start-from-1st-block   Start processing from the first block instead         [default: false]
+                           of the last (only works with decrypt mode)
 
 Examples
   $ poattack decrypt http://localhost:2020/decrypt?ciphertext=
