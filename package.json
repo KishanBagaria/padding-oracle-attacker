@@ -22,7 +22,7 @@
     "clean": "trash dist || rm -rf dist",
     "lint": "eslint --ext ts,js src/ test/",
     "test": "(yarn lint || npm run lint); ava",
-    "prepublishOnly": "yarn build || npm run build",
+    "prepublishOnly": "(yarn clean || npm run clean); (yarn build || npm run build)",
     "vuln-server": "node test/helpers/vulnerable-server.js"
   },
   "keywords": [
