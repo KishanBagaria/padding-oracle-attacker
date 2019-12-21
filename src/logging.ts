@@ -197,10 +197,11 @@ interface AnalysisLogCompletion {
   isCacheEnabled: boolean
 }
 export const analysis = {
-  logStart({ url, blockSize }: { url: string, blockSize: number }) {
+  logStart({ url, blockSize, tmpDirPath }: { url: string, blockSize: number, tmpDirPath?: string }) {
     console.log(chalk.bold.white('~~~RESPONSE ANALYSIS~~~'))
     console.log('url:', chalk.yellow(url), '|', 'block size:', chalk.yellow(String(blockSize)))
-    // console.log('will make 256 network requests and analyze responses')
+    console.log('will make 256 network requests and analyze responses')
+    if (tmpDirPath) console.log('responses will be saved to', chalk.underline(tmpDirPath))
     console.log()
   },
   logCompletion({ responsesTable, statusCodeFreq, bodyLengthFreq, tmpDirPath, networkStats, isCacheEnabled }: AnalysisLogCompletion) {

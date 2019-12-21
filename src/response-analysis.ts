@@ -33,21 +33,27 @@ async function analyseResponses({
   ow(blockSize, ow.number)
   ow(concurrency, ow.number)
 
-  if (['full', 'minimal'].includes(logMode)) await logStart({ url, blockSize })
+  const tmpDirPath = saveResponsesToTmpDir ? (await tmp.dir({ prefix: 'poattack_' })).path : ''
+  if (['full', 'minimal'].includes(logMode)) await logStart({ url, blockSize, tmpDirPath })
 
   const { callOracle, networkStats } = OracleCaller({ url, isCacheEnabled, ...args })
 
   const statusCodeFreq: {[key: string]: number} = {}
   const bodyLengthFreq: {[key: string]: number} = {}
   const responses: {[key: number]: OracleResultWithPayload} = {}
+  const fsPromises: Promise<void>[] = []
   const rows: string[][] = []
   async function processByte(byte: number) {
     const twoBlocks = Buffer.alloc(blockSize * 2)
     twoBlocks[blockSize - 1] = byte
     const req = await callOracle(twoBlocks)
+    const res = { ...req, payload: twoBlocks }
+    if (saveResponsesToTmpDir) {
+      fsPromises.push(fse.writeFile(path.join(tmpDirPath, byte + '.html'), getResponseText(res)))
+    }
     const { statusCode } = req
     const cl = req.body.length
-    responses[byte] = { ...req, payload: twoBlocks }
+    responses[byte] = res
     statusCodeFreq[statusCode] = (statusCodeFreq[statusCode] || 0) + 1
     bodyLengthFreq[cl] = (bodyLengthFreq[cl] || 0) + 1
     const color = getStatusCodeColor(statusCode)
@@ -59,12 +65,7 @@ async function analyseResponses({
     for (const byte of byteRange) await processByte(byte)
   }
 
-  const tmpDirPath = saveResponsesToTmpDir ? (await tmp.dir({ prefix: 'poattack_' })).path : ''
-  if (saveResponsesToTmpDir) {
-    await bluebird.map(Object.entries(responses),
-      ([byte, res]) => fse.writeFile(path.join(tmpDirPath, byte + '.html'), getResponseText(res)))
-  }
-
+  await Promise.all(fsPromises)
 
   if (['full', 'minimal'].includes(logMode)) {
     const responsesTable = orderBy(rows, [1, 2, x => +x[0]])
