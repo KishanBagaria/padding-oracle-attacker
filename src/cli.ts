@@ -1,3 +1,5 @@
+import fse from 'fs-extra'
+import path from 'path'
 import minimist from 'minimist'
 import chalk from 'chalk'
 
@@ -21,6 +23,9 @@ const argv = minimist(process.argv.slice(2), {
     'start-from-first-block': 'start-from-1st-block'
   }
 })
+
+const BANNER = fse.readFileSync(path.join(__dirname, '../banner.txt'), 'utf-8')
+console.log(BANNER)
 
 const USAGE = chalk`
   {inverse Usage}
