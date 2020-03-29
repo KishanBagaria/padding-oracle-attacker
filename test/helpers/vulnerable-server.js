@@ -7,11 +7,11 @@ const { encrypt, decrypt } = require('./crypto')
 const randomBytes = util.promisify(crypto.randomBytes)
 
 const DEFAULT_KEY = Buffer.from('00112233445566778899112233445566', 'hex')
+const DEFAULT_ENCODING = 'hex'
 
 function run(args) {
   const { port = 2020, loggingEnabled, encryptionAlgo = 'aes-128-cbc', key = DEFAULT_KEY } = args || {}
   const blockSize = +args.blockSize || 16
-  const defaultEncoding = 'hex'
 
   const app = express()
   app.disable('x-powered-by')
@@ -28,8 +28,7 @@ function run(args) {
     const iv = await randomBytes(blockSize)
     const plaintextBuffer = Buffer.from(plaintext, 'utf8')
     const ciphertext = encrypt(encryptionAlgo, plaintextBuffer, key, iv)
-    const ciphertextHex = ciphertext.toString('hex')
-    res.send(iv.toString(defaultEncoding) + ciphertextHex)
+    res.send(Buffer.concat([iv, ciphertext]).toString(DEFAULT_ENCODING))
   })
   app.all('/decrypt', (req, res) => {
     const { ciphertext, includeHeaders = false } = req.query
@@ -37,7 +36,7 @@ function run(args) {
       res.sendStatus(400)
       return
     }
-    const fullBuffer = Buffer.from(ciphertext, defaultEncoding)
+    const fullBuffer = Buffer.from(ciphertext, DEFAULT_ENCODING)
     const ivBuffer = fullBuffer.slice(0, blockSize)
     const ciphertextBuffer = fullBuffer.slice(blockSize)
     const reqDetails = [req.method, req.headers, req.body]
