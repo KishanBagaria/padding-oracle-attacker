@@ -1,6 +1,6 @@
 {
   "name": "padding-oracle-attacker",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "CLI tool and library to execute padding oracle attacks easily",
   "license": "MIT",
   "repository": "KishanBagaria/padding-oracle-attacker",
