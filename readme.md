@@ -8,12 +8,14 @@ CLI tool and library to execute [padding oracle attacks](https://en.wikipedia.or
 
 ## Install
 
+Make sure [Node.js](https://nodejs.org/) is installed, then run
+
 ```sh
-$ yarn global add padding-oracle-attacker
+$ npm install --global padding-oracle-attacker
 ```
 or
 ```sh
-$ npm install --global padding-oracle-attacker
+$ yarn global add padding-oracle-attacker
 ```
 
 ## CLI Usage
