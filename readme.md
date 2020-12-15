@@ -20,67 +20,70 @@ $ yarn global add padding-oracle-attacker
 
 ## CLI Usage
 
-```
+```text
 Usage
-  $ padding-oracle-attacker decrypt <url> hex:<ciphertext_hex> <block_size> <error> [options]
-  $ padding-oracle-attacker decrypt <url> b64:<ciphertext_b64> <block_size> <error> [options]
+    $ padding-oracle-attacker decrypt <url> hex:<ciphertext_hex> <block_size> <error> [options]
+    $ padding-oracle-attacker decrypt <url> b64:<ciphertext_b64> <block_size> <error> [options]
 
-  $ padding-oracle-attacker encrypt <url> <plaintext>          <block_size> <error> [options]
-  $ padding-oracle-attacker encrypt <url> hex:<plaintext_hex>  <block_size> <error> [options]
+    $ padding-oracle-attacker encrypt <url> <plaintext>          <block_size> <error> [options]
+    $ padding-oracle-attacker encrypt <url> hex:<plaintext_hex>  <block_size> <error> [options]
 
-  $ padding-oracle-attacker analyze <url> [<block_size>] [options]
+    $ padding-oracle-attacker analyze <url> [<block_size>] [options]
 
 Commands
-  decrypt                  Finds the plaintext (foobar) for given ciphertext (hex:0123abcd)
-  encrypt                  Finds the ciphertext (hex:abcd1234) for given plaintext (foo=bar)
-  analyze                  Helps find out if the URL is vulnerable or not, and
-                           how the response differs when a decryption error occurs
-                           (for the <error> argument)
+    decrypt                  Finds the plaintext (foobar) for given ciphertext (hex:0123abcd)
+    encrypt                  Finds the ciphertext (hex:abcd1234) for given plaintext (foo=bar)
+    analyze                  Helps find out if the URL is vulnerable or not, and
+                             how the response differs when a decryption error occurs
+                             (for the <error> argument)
 
 Arguments
-  <url>                    URL to attack. Payload will be inserted at the end by default. To specify
-                           a custom injection point, include {POPAYLOAD} in a header (-H),
-                           request body (-d) or the URL
-  <block_size>             Block size used by the encryption algorithm on the server
-  <error>                  The string present in response when decryption fails on the server.
-                           Specify a string present in the HTTP response body (like PaddingException)
-                           or status code of the HTTP response (like 400)
+    <url>                    URL to attack. Payload will be inserted at the end by default. To specify
+                             a custom injection point, include {underline \{POPAYLOAD\}} in a header (-H),
+                             request body (-d) or the URL
+    <block_size>             Block size used by the encryption algorithm on the server
+    <error>                  The string present in response when decryption fails on the server.
+                             Specify a string present in the HTTP response body (like PaddingException)
+                             or status code of the HTTP response (like 400)
 
 Options
-  -c, --concurrency        Requests to be sent concurrently                      [default: 128]
-      --disable-cache      Disable network cache. Saved to                       [default: false]
-                           poattack-cache.json.gz.txt by default
-  -X, --method             HTTP method to use while making request               [default: GET]
-  -H, --header             Headers to be sent with request.
-                             -H 'Cookie: cookie1' -H 'User-Agent: Googlebot/2.1'
-  -d, --data               Request body
-                             JSON string: {"id": 101, "foo": "bar"}
-                             URL encoded: id=101&foo=bar
-                           Make sure to specify the Content-Type header.
+    -c, --concurrency        Requests to be sent concurrently                      [default: 128]
+        --disable-cache      Disable network cache. Saved to                       [default: false]
+                             poattack-cache.json.gz.txt by default
+    -X, --method             HTTP method to use while making request               [default: GET]
+    -H, --header             Headers to be sent with request.
+                               -H 'Cookie: cookie1' -H 'X-Forwarded-For: 127.0.0.1'
+    --random-agent           Create a random User-Agent for all requests.
+    -d, --data               Request body
+                               JSON string: \{"id": 101, "foo": "bar"\}
+                               URL encoded: id=101&foo=bar
+                             Make sure to specify the Content-Type header.
+    -t, --timeout            Set timeout for all requests (seconds)                [default: 5]
+    -r, --retry              Set retry if timeout or request failed                [default: 2]
 
-  -e, --payload-encoding   Ciphertext payload encoding for {POPAYLOAD}           [default: hex]
-                             base64          FooBar+/=
-                             base64-urlsafe  FooBar-_
-                             hex             deadbeef
-                             hex-uppercase   DEADBEEF
-                             base64(xyz)     Custom base64 ('xyz' represent characters for '+/=')
+    -e, --payload-encoding   Ciphertext payload encoding for {underline \{POPAYLOAD\}}           [default: hex]
+                               base64          FooBar+/=
+                               base64-urlsafe  FooBar-_
+                               hex             deadbeef
+                               hex-uppercase   DEADBEEF
+                               base64(xyz)     Custom base64 ('xyz' represent characters for '+/=')
 
-  --dont-urlencode-payload Don't URL encode {POPAYLOAD}                          [default: false]
+    --dont-urlencode-payload Don't URL encode {underline \{POPAYLOAD\}}                          [default: false]
 
-  --start-from-1st-block   Start processing from the first block instead         [default: false]
-                           of the last (only works with decrypt mode)
+    --start-from-1st-block   Start processing from the first block instead         [default: false]
+                             of the last (only works with decrypt mode)
 
 Examples
-  $ poattack decrypt http://localhost:2020/decrypt?ciphertext=
-      hex:e3e70d8599206647dbc96952aaa209d75b4e3c494842aa1aa8931f51505df2a8a184e99501914312e2c50320835404e9
-      16 400
-  $ poattack encrypt http://localhost:2020/decrypt?ciphertext= "foo bar 🦄" 16 400
-  $ poattack encrypt http://localhost:2020/decrypt?ciphertext= hex:666f6f2062617220f09fa684 16 400
-  $ poattack analyze http://localhost:2020/decrypt?ciphertext=
+    $ poattack decrypt http://localhost:2020/decrypt?ciphertext=
+        hex:e3e70d8599206647dbc96952aaa209d75b4e3c494842aa1aa8931f51505df2a8a184e99501914312e2c50320835404e9
+        16 400
+    $ poattack encrypt http://localhost:2020/decrypt?ciphertext= "foo bar 🦄" 16 400
+    $ poattack encrypt http://localhost:2020/decrypt?ciphertext= hex:666f6f2062617220f09fa684 16 400
+    $ poattack analyze http://localhost:2020/decrypt?ciphertext=
 
 Aliases
-  poattack
-  padding-oracle-attack
+    poattack
+    padding-oracle-attack
 ```
 
 ## Library API
@@ -125,14 +128,20 @@ Network requests to be sent concurrently.
 ###### `isCacheEnabled: boolean = true`
 Responses are cached by default and saved to `poattack-cache.json.gz.txt`. Set to `false` to disable caching.
 
-###### `requestOptions: { method, headers, data }`
+###### `requestOptions: { method, headers, data, timeout, retry }`
 ###### `requestOptions.method: string`
 HTTP method to use while making the request. `GET` by default. `POST`, `PUT`, `DELETE` are some valid options.
 
 ###### `requestOptions.headers: { string: string }`
 Headers to be sent with request. Example: `{ 'Content-Type': 'application/x-www-form-urlencoded' }`
 
-###### `requestOptions.body: string`
+###### `requestOptions.timeout: number = 5`
+Timeout (seconds) for all requests. Example: `timeout = 5`
+
+###### `requestOptions.retry: number = 2`
+Retry how many times after reuqest failed like "ETIMEDOUT", "ECONNREFUSED", "ECONNRESET". Example: `retry = 2`
+
+###### `requestOptions.data: string`
 Request body. Can be a JSON string, URL encoded params etc. `Content-Type` header has to be set manually.
 
 ###### `logMode: 'full'|'minimal'|'none' = 'full'`

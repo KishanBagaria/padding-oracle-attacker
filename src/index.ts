@@ -1,4 +1,3 @@
-import './bluebird'
 import decryptFunc from './decrypt'
 import encryptFunc from './encrypt'
 

@@ -2,9 +2,12 @@ export interface HeadersObject { [key: string]: string }
 export interface OracleResult { url: string, statusCode: number, headers: HeadersObject, body: string }
 
 interface RequestOptions {
-  method?: string
+  method?: 'get' | 'post' | 'put' | 'patch' | 'head' | 'delete' | 'options' | 'trace' | 'GET' | 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'DELETE' | 'OPTIONS' | 'TRACE'
   headers?: string | string[] | HeadersObject
   data?: string
+  userAgent?: string
+  timeout?: number
+  retry?: number
 }
 export interface OracleCallerOptions {
   url: string

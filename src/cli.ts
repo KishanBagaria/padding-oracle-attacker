@@ -8,7 +8,8 @@ import encryptFunc from './encrypt'
 import analyzeFunc from './response-analysis'
 import { logError } from './logging'
 import { OracleResult } from './types'
-import { PKG_NAME, PKG_VERSION } from './constants'
+import { PKG_NAME, PKG_VERSION, DEFAULT_USER_AGENT } from './constants'
+const randomUseragent = require('random-useragent');
 
 const argv = minimist(process.argv.slice(2), {
   string: ['method', 'header', 'data', 'payload-encoding'],
@@ -18,9 +19,12 @@ const argv = minimist(process.argv.slice(2), {
     c: 'concurrency',
     X: 'method',
     H: 'header',
+    t: 'timeout',
+    r: 'retry',
     d: 'data',
     e: 'payload-encoding',
-    'start-from-first-block': 'start-from-1st-block'
+    'start-from-first-block': 'start-from-1st-block',
+    h: 'help',
   }
 })
 
@@ -55,15 +59,18 @@ const USAGE = chalk`
 
   {inverse Options}
     -c, --concurrency        Requests to be sent concurrently                      [default: 128]
-        --disable-cache      Disable network cache. Saved to                       [default: false]
+    --disable-cache          Disable network cache. Saved to                       [default: false]
                              poattack-cache.json.gz.txt by default
     -X, --method             HTTP method to use while making request               [default: GET]
     -H, --header             Headers to be sent with request.
-                               -H 'Cookie: cookie1' -H 'User-Agent: Googlebot/2.1'
+                               -H 'Cookie: cookie1' -H 'X-Forwarded-For: 127.0.0.1'
+    --random-agent           Create a random User-Agent for all requests.
     -d, --data               Request body
                                JSON string: \{"id": 101, "foo": "bar"\}
                                URL encoded: id=101&foo=bar
                              Make sure to specify the Content-Type header.
+    -t, --timeout            Set timeout for all requests (seconds)                [default: 5]
+    -r, --retry              Set retry if timeout or request failed                [default: 2]
 
     -e, --payload-encoding   Ciphertext payload encoding for {underline \{POPAYLOAD\}}           [default: hex]
                                base64          FooBar+/=
@@ -76,6 +83,8 @@ const USAGE = chalk`
 
     --start-from-1st-block   Start processing from the first block instead         [default: false]
                              of the last (only works with decrypt mode)
+    
+    -h, --help               Show all this tips.
 
   {inverse Examples}
     {gray $} poattack decrypt http://localhost:2020/decrypt?ciphertext=
@@ -94,13 +103,17 @@ const {
   method,
   H: headers,
   data,
+  t: timeout,
+  r: retry,
   concurrency,
   e: payloadEncoding = 'hex',
   'disable-cache': disableCache,
   cache,
   'start-from-1st-block': startFromFirstBlock,
-  'dont-urlencode-payload': dontURLEncodePayload
+  'dont-urlencode-payload': dontURLEncodePayload,
+  h: help
 } = argv
+const userAgent = !!argv['random-agent'] ? randomUseragent.getRandom() : DEFAULT_USER_AGENT // --random-agent
 
 const VALID_ENCODINGS = ['hex-uppercase', 'base64', 'base64-urlsafe', 'hex']
 const DEFAULT_BLOCK_SIZE = 16
@@ -124,6 +137,10 @@ function strToBuffer(input: string, fromPlain: boolean = true) {
 async function main() {
   const [operation, url] = argv._
   const [,, thirdArg, fourthArg, paddingError] = argv._ as string[] | number[]
+  if (help) {
+    console.log(USAGE)
+    return
+  }
   if (version) {
     console.log(PKG_NAME, 'v' + PKG_VERSION)
     return
@@ -132,7 +149,7 @@ async function main() {
   const isDecrypt = operation === 'decrypt'
   const isAnalyze = ['analyze', 'analyse'].includes(operation)
   const blockSize = Math.abs(isAnalyze ? +thirdArg : +fourthArg) || DEFAULT_BLOCK_SIZE
-  const requestOptions = { method, headers, data }
+  const requestOptions = { method, headers, userAgent, data, timeout, retry }
   const cipherOrPlaintext = String(thirdArg)
   if (
     (!isEncrypt && !isDecrypt && !isAnalyze) || !url

@@ -1,5 +1,5 @@
 import pLimit, { Limit } from 'p-limit'
-import bluebird from './bluebird'
+import bluebird from 'bluebird'
 
 class IgnoreError extends Error {
   public constructor() {

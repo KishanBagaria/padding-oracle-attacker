@@ -1,4 +1,4 @@
-import bluebird from './bluebird' // eslint-disable-line import/order
+import bluebird from 'bluebird' // eslint-disable-line import/order
 
 import ow from 'ow'
 import { range } from 'lodash'

@@ -1,4 +1,4 @@
-import bluebird from './bluebird' // eslint-disable-line import/order
+import bluebird from 'bluebird' // eslint-disable-line import/order
 
 import path from 'path'
 import ow from 'ow'

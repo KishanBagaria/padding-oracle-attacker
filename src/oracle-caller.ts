@@ -4,7 +4,6 @@ import { pick } from 'lodash'
 
 import cacheStore from './cache'
 import { arrayifyHeaders } from './util'
-import { DEFAULT_USER_AGENT } from './constants'
 import { HeadersObject, OracleResult, OracleCallerOptions } from './types'
 
 type AddPayload = (str?: string) => string | undefined
@@ -41,11 +40,14 @@ const OracleCaller = (options: OracleCallerOptions) => {
   ow(_url, 'url', ow.string)
   if (transformPayload) ow(transformPayload, ow.function)
   ow(requestOptions, ow.object)
-  ow(requestOptions.method, ow.optional.string)
+  ow(requestOptions.method, ow.any(ow.optional.string, ow.optional.undefined))
   if (requestOptions.headers) ow(requestOptions.headers, ow.any(ow.object, ow.string, ow.array))
   ow(requestOptions.data, ow.optional.string)
+  ow(requestOptions.userAgent, ow.optional.string)
+  ow(requestOptions.timeout, ow.optional.number)
+  ow(requestOptions.retry, ow.optional.number)
 
-  const { method, headers, data } = requestOptions
+  const { method, headers, data, userAgent, timeout = 5, retry = 2 } = requestOptions
   const injectionStringPresent = !_url.includes(POPAYLOAD)
     && !String(typeof headers === 'object' ? JSON.stringify(headers) : headers).includes(POPAYLOAD)
     && !(data || '').includes(POPAYLOAD)
@@ -60,24 +62,30 @@ const OracleCaller = (options: OracleCallerOptions) => {
     const cacheKey = [url, JSON.stringify(customHeaders), body].join('|')
     if (isCacheEnabled) {
       const cached = await cacheStore.get(cacheKey) as OracleResult
-      if (cached) return { url, ...cached }
+      if (cached) return { ...cached, url}
     }
     const response = await got(url, {
       throwHttpErrors: false,
       method,
       headers: {
-        'user-agent': DEFAULT_USER_AGENT,
+        'user-agent': userAgent,
         ...customHeaders
+      },
+      timeout: timeout * 1000,
+      retry: {
+        limit: retry,
+        statusCodes: [],
+        errorCodes: ["ETIMEDOUT", "ECONNREFUSED", "ECONNRESET"],
       },
       body
     })
     networkStats.count++
-    networkStats.lastDownloadTime = response.timings.phases.total
+    networkStats.lastDownloadTime = response.timings.phases.total || 0
     networkStats.bytesDown += response.socket.bytesRead || 0
     networkStats.bytesUp += response.socket.bytesWritten || 0
     const result = pick(response, ['statusCode', 'headers', 'body']) as OracleResult
     if (isCacheEnabled) await cacheStore.set(cacheKey, result)
-    return { url, ...result }
+    return { ...result, url }
   }
   return { networkStats, callOracle }
 }
