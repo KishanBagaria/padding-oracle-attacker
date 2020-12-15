@@ -13,7 +13,9 @@ Make sure [Node.js](https://nodejs.org/) is installed, then run
 ```sh
 $ npm install --global padding-oracle-attacker
 ```
+
 or
+
 ```sh
 $ yarn global add padding-oracle-attacker
 ```
@@ -89,33 +91,39 @@ Aliases
 ## Library API
 
 ```js
-const { decrypt, encrypt } = require('padding-oracle-attacker')
+const { decrypt, encrypt } = require('padding-oracle-attacker');
 // or
-import { decrypt, encrypt } from 'padding-oracle-attacker'
+import { decrypt, encrypt } from 'padding-oracle-attacker';
 
-const { blockCount, totalSize, foundBytes, interBytes } = await decrypt(options)
+const { blockCount, totalSize, foundBytes, interBytes } = await decrypt(options);
 
-const { blockCount, totalSize, foundBytes, interBytes, finalRequest } = await encrypt(options)
+const { blockCount, totalSize, foundBytes, interBytes, finalRequest } = await encrypt(options);
 ```
 
 #### `decrypt(options: Object): Promise`
+
 #### `encrypt(options: Object): Promise`
 
 ##### Required options
 
 ###### `url: string`
+
 URL to attack. Payload will be appended at the end by default. To specify a custom injection point, include `{POPAYLOAD}` in the URL, a header (`requestOptions.headers`) or the request body (`requestOptions.data`)
 
 ###### `blockSize: number`
+
 Block size used by the encryption algorithm on the server.
 
 ###### `isDecryptionSuccess: ({ statusCode, headers, body }) => boolean`
+
 Function that returns true if the server response indicates decryption was successful.
 
 ###### `ciphertext: Buffer` (`decrypt` only)
+
 Ciphertext to decrypt.
 
 ###### `plaintext: Buffer` (`encrypt` only)
+
 Plaintext to encrypt. Padding will be added automatically. Example: `Buffer.from('foo bar', 'utf8')`
 
 ---
@@ -123,58 +131,76 @@ Plaintext to encrypt. Padding will be added automatically. Example: `Buffer.from
 ##### Optional options
 
 ###### `concurrency: number = 128`
+
 Network requests to be sent concurrently.
 
 ###### `isCacheEnabled: boolean = true`
+
 Responses are cached by default and saved to `poattack-cache.json.gz.txt`. Set to `false` to disable caching.
 
 ###### `requestOptions: { method, headers, data, timeout, retry }`
+
 ###### `requestOptions.method: string`
+
 HTTP method to use while making the request. `GET` by default. `POST`, `PUT`, `DELETE` are some valid options.
 
 ###### `requestOptions.headers: { string: string }`
+
 Headers to be sent with request. Example: `{ 'Content-Type': 'application/x-www-form-urlencoded' }`
 
 ###### `requestOptions.timeout: number = 5`
+
 Timeout (seconds) for all requests. Example: `timeout = 5`
 
 ###### `requestOptions.retry: number = 2`
+
 Retry how many times after reuqest failed like "ETIMEDOUT", "ECONNREFUSED", "ECONNRESET". Example: `retry = 2`
 
 ###### `requestOptions.data: string`
+
 Request body. Can be a JSON string, URL encoded params etc. `Content-Type` header has to be set manually.
 
 ###### `logMode: 'full'|'minimal'|'none' = 'full'`
+
 `full`: Log everything to console (default)  
 `minimal`: Log only after start and completion to console  
 `none`: Log nothing to console
 
 ###### `transformPayload: (ciphertext: Buffer) => string`
+
 Function to convert the `ciphertext` into a string when making a request. By default, `ciphertext` is encoded in hex and inserted at the injection point (URL end unless `{POPAYLOAD}` is present).
 
 ---
+
 ##### Optional options (`decrypt` only)
 
 ###### `alreadyFound: Buffer`
+
 Plaintext bytes already known/found that can be skipped (from the end). If you provide a `Buffer` of ten bytes, the last ten bytes will be skipped.
 
 ###### `initFirstPayloadBlockWithOrigBytes: boolean = false`
+
 Initialize first payload block with original `ciphertext` bytes instead of zeroes.  
 Example: `abcdef12345678ff 1111111111111111` instead of `00000000000000ff 1111111111111111`
 
 ###### `startFromFirstBlock: boolean = false`
+
 Start processing from the first block instead of the last.
 
 ###### `makeInitialRequest: boolean = true`
+
 Make an initial request with the original `ciphertext` provided and log server response to console to allow the user to make sure network requests are being sent correctly.
 
 ---
+
 ##### Optional options (`encrypt` only)
 
 ###### `makeFinalRequest: boolean = true`
+
 After finding the `ciphertext` bytes for the new `plaintext`, make a final request with the found bytes and log the server response to console.
 
 ###### `lastCiphertextBlock: Buffer`
+
 Custom ciphertext for the last block. Last block is just zeroes by default (`000000000000000`).
 
 ## Developing
@@ -183,28 +209,33 @@ Custom ciphertext for the last block. Last block is just zeroes by default (`000
 Example: `yarn build` then `node dist/cli ...` or simply `ts-node src/cli ...`
 
 ##### `yarn build` or `npm run build`
+
 Builds the TypeScript files inside the `src` directory to JS files and outputs them to the `dist` directory.
 
 ##### `yarn clean` or `npm run clean`
+
 Deletes the `dist` directory.
 
 ##### `yarn lint` or `npm run lint`
+
 Lints the files using eslint.
 
 ##### `yarn test` or `npm run test`
+
 Lints and runs the tests using ava.
 
 ##### `node test/helpers/vulnerable-server.js`
+
 Runs the test server which is vulnerable to padding oracle attacks at <http://localhost:2020>
 
 ## Related
 
-* [PadBuster](https://github.com/GDSSecurity/PadBuster) (Perl)
-* [Padding Oracle Attack](https://github.com/mpgn/Padding-oracle-attack) (Python)
-* [python-paddingoracle](https://github.com/mwielgoszewski/python-paddingoracle) (Python)
-* [Poracle](https://github.com/iagox86/poracle) (Ruby)
-* [GoPaddy](https://github.com/glebarez/GoPaddy) (Go)
-* [pax](https://github.com/liamg/pax) (Go)
+- [PadBuster](https://github.com/GDSSecurity/PadBuster) (Perl)
+- [Padding Oracle Attack](https://github.com/mpgn/Padding-oracle-attack) (Python)
+- [python-paddingoracle](https://github.com/mwielgoszewski/python-paddingoracle) (Python)
+- [Poracle](https://github.com/iagox86/poracle) (Ruby)
+- [GoPaddy](https://github.com/glebarez/GoPaddy) (Go)
+- [pax](https://github.com/liamg/pax) (Go)
 
 ## License
 
