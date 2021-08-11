@@ -4,7 +4,7 @@ CLI tool and library to execute [padding oracle attacks](https://en.wikipedia.or
 
 <img alt="poattack decrypt demo" src="media/poattack-decrypt.gif" width="734" height="492" />
 
-[![Build Status](https://travis-ci.org/KishanBagaria/padding-oracle-attacker.svg)](https://travis-ci.org/KishanBagaria/padding-oracle-attacker)
+[![Build Status](https://api.travis-ci.com/KishanBagaria/padding-oracle-attacker.svg)](https://travis-ci.com/KishanBagaria/padding-oracle-attacker)
 
 ## Install
 
