@@ -190,12 +190,15 @@ Runs the test server which is vulnerable to padding oracle attacks at <http://lo
 
 ## Related
 
-* [PadBuster](https://github.com/GDSSecurity/PadBuster) (Perl)
+* [PadBuster](https://github.com/AonCyberLabs/PadBuster) (Perl)
 * [Padding Oracle Attack](https://github.com/mpgn/Padding-oracle-attack) (Python)
 * [python-paddingoracle](https://github.com/mwielgoszewski/python-paddingoracle) (Python)
 * [Poracle](https://github.com/iagox86/poracle) (Ruby)
 * [GoPaddy](https://github.com/glebarez/GoPaddy) (Go)
 * [pax](https://github.com/liamg/pax) (Go)
+* [padre](https://github.com/glebarez/padre) (Go)
+* [Padantic](https://github.com/sum-catnip/padantic) (Rust)
+* [Padoracle](https://github.com/imyelo/padoracle) (JavaScript)
 
 ## License
 
